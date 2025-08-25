@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sterowanie odtwarzaczem</title>
+  <style>
+    :root { font-family: system-ui, Arial, sans-serif; }
+    body { margin: 0; display: grid; place-items: center; min-height: 100vh; background: #0f172a; color: #e2e8f0; }
+    .card { width: min(680px, 92vw); background: #111827; border: 1px solid #273449; border-radius: 18px; padding: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+    h1 { margin: 0 0 14px; font-size: 1.25rem; }
+    p.hint { margin: 6px 0 18px; color: #94a3b8; font-size: .95rem; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    button { cursor: pointer; border: 0; padding: 14px 12px; border-radius: 12px; font-weight: 600; background: #1f2937; color: #e5e7eb; transition: transform .06s ease, background .2s; }
+    button:hover { background: #374151; transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    button[disabled] { opacity: .6; cursor: progress; }
+    .log { margin-top: 16px; padding: 12px; background: #0b1220; border: 1px solid #233147; border-radius: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow: auto; }
+    .ok { color: #86efac; }
+    .err { color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Sterowanie odtwarzaczem (HTTP JSON)</h1>
+    <p class="hint">Kliknij przycisk – strona wyśle <code>{"button": "..."}</code> metodą POST do endpointu API.</p>
+
+    <div class="grid">
+      <button id="beforeBtn" data-button="before">⏮️ BEFORE</button>
+      <button id="stopBtn"   data-button="stop">⏸️ STOP/RESUME</button>
+      <button id="nextBtn"   data-button="next">⏭️ NEXT</button>
+    </div>
+
+    <div class="log" id="log">Czekam na akcję…</div>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:5000/click";
+
+    const logEl = document.getElementById("log");
+    const buttons = document.querySelectorAll("button[data-button]");
+
+    function setBusy(busy) {
+      buttons.forEach(b => b.disabled = busy);
+    }
+
+    function log(msg, cls = "") {
+      logEl.innerHTML = `<span class="${cls}">${new Date().toLocaleTimeString()} — ${msg}</span>\n` + logEl.innerHTML;
+    }
+    // --- STREAM z serwera ---
+    const evtSource = new EventSource("/stream");
+
+    evtSource.onmessage = (event) => {
+      log("Otrzymano: " + event.data, "ok");
+    };
+
+    evtSource.onerror = (err) => {
+      log("Błąd połączenia z /stream: " + err, "err");
+    };
+
+    async function sendCommand(buttonId) {
+      setBusy(true);
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ button: buttonId })
+        });
+
+        const text = await res.text();
+        if (!res.ok) {
+          log(`Błąd ${res.status}: ${text || res.statusText}`, "err");
+        } else {
+          // Spróbuj sparsować JSON; jeśli się nie uda – pokaż surowy tekst
+          try {
+            const json = JSON.parse(text);
+            log(`OK: ${JSON.stringify(json)}`, "ok");
+          } catch {
+            log(`OK: ${text}`, "ok");
+          }
+        }
+      } catch (e) {
+        log(`Wyjątek sieciowy: ${e}`, "err");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    // Obsługa kliknięć
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => sendCommand(btn.dataset.button));
+    });
+
+    // skróty klawiaturowe: B=before, S=stop, N=next
+    window.addEventListener("keydown", (e) => {
+      if (e.repeat) return;
+      const k = e.key.toLowerCase();
+      if (k === "b") sendCommand("before");
+      if (k === "s") sendCommand("stop");
+      if (k === "n") sendCommand("next");
+    });
+  </script>
+</body>
+</html>

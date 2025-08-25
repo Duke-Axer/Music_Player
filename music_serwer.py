@@ -4,7 +4,7 @@ import threading
 import json
 import random
 import logging
-from flask import Flask, render_template,request, jsonify
+from flask import Flask, render_template,request, jsonify, Response
 
 LibMPVPlayer = None
 MusicLibrary = None
@@ -12,19 +12,21 @@ MusicLibrary = None
 
 # Konfikuracja i tworzenie HTTP
 app = Flask(__name__)
-render_template("index.html")
+@app.route("/")
+def index()
+    render_template("index.html")
 
 
 
 # Konfiguracja loggera
 logging.basicConfig(
     filename='app.log',       # plik do logów
-    level=logging.WARNING,       # loguj wszystko od warning
+    level=logging.DEBUG,       # loguj wszystko od debug/warning
     format='%(asctime)s - %(levelname)s - %(message)s',
     encoding='utf-8'
 )
 
-# Załaduj bibliotekę libmpv
+# Ładowanie biblioteki libmpv
 libmpv = ctypes.CDLL("libmpv.so")
 
 # Definicje potrzebne do mpv_handle
@@ -200,6 +202,8 @@ class PlayerCtrl():
         LibMPVPlayer.next(MusicLibrary.next())
     def before():
         LibMPVPlayer.next(MusicLibrary.before())
+    def play():
+        LibMPVPlayer.play()
 
 
 @app.route('/click', methods=['POST'])
@@ -218,10 +222,28 @@ def click():
         logging.DEBUG("Message - BEFORE")
         PlayerCtrl.before()
 
+@app.route("/stream")
+def stream():
+    def event_stream():
+        while True:
+            time.sleep(1)
+            yield f"data: Serwer mówi: {time.ctime()}\n\n"
+    return Response(event_stream(), mimetype="text/event-stream")
+
+def test():
+    
+    def libmpv():
+        global LibMPVPlayer
+        song_path_test = ""
+        LibMPVPlayer.play(song_path_test)
+        time.sleep(3)
+        LibMPVPlayer.stop()
+    
 
 if __name__ == "__main__":
     logging.DEBUG("START")
     player = LibMPVPlayer()
     player.play_current_threaded()
     music_lib = MusicLibrary()
+    app.run(host="0.0.0.0", port=5000)
     
