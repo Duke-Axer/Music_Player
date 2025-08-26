@@ -38,6 +38,8 @@ def test_import_flask(flask_p):
 
 def test_libmpv():
     import ctypes
+    from music_serwer import LibMPVPlayerThreaded
+    import time
     path = "libmpv.so"
     if not os.path.isfile(path):
         pytest.fail(f"Brak pliku libmpv.so")
@@ -47,18 +49,10 @@ def test_libmpv():
         pytest.fail(f"nie mozna zaladowac libmpv.so")
     
     try:
-        from music_serwer import LibMPVPlayerThreaded
-        import time
         test_file = "tests/test.mp3"
         player = LibMPVPlayerThreaded()
         player.play(test_file)
         time.sleep(3)
         player.stop()
-        import threading
-        t = threading.Thread(target=play_test)
-        t.start()
-        t.join()
-
-        print("Test odtworzenia zako?czony.")
     except:
         pytest.fail(f"Nie udało się odtworzyć audio")
