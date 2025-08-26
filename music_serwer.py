@@ -129,7 +129,7 @@ class MusicLibrary():
     current_index_song = 0
     music_dir = "/data/data/com.termux/files/home/storage/music" 
     # "/data/data/com.termux/files/home/storage/music" "C:/Nekran/Music"
-    muzyka_exts = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
+    music_exts = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
     info_file = "info_music.json"
     _instance = None
 
@@ -137,6 +137,8 @@ class MusicLibrary():
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.current_track = None
+            cls.read_dir_library()
+            cls.do_library()
         return cls._instance
 
     def _create_info_file(self):
@@ -153,12 +155,14 @@ class MusicLibrary():
         with open(music_library.info_file, "w", encoding="utf-8") as f:
             json.dump(music_files, f, ensure_ascii=False, indent=4)
             print(f"Zapisano {len(music_files)} plików muzycznych do '{music_library.info_file}'")
+        self.read_dir_library()
 
     def read_dir_library(self):
         """Odczytuje plik JSON z informacjami o utworach i zwraca słownik."""
         if not os.path.exists(music_library.info_file):
             print(f"Plik '{MusicLibrary.info_file}' nie istnieje.")
             MusicLibrary.full_library = {}
+            self._create_info_file()
             return
 
         with open(music_library.info_file, "r", encoding="utf-8") as f:
@@ -234,14 +238,6 @@ def stream():
             yield f"data: Serwer mówi: {time.ctime()}\n\n"
     return Response(event_stream(), mimetype="text/event-stream")
 
-def test():
-    
-    def libmpv():
-        global LibMPVPlayer
-        song_path_test = ""
-        LibMPVPlayer.play(song_path_test)
-        time.sleep(3)
-        LibMPVPlayer.stop()
     
 
 if __name__ == "__main__":

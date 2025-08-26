@@ -56,3 +56,22 @@ def test_libmpv():
         player.stop()
     except:
         pytest.fail(f"Nie udało się odtworzyć audio")
+
+def test_music_dir_exists():
+    music_dir = "/data/data/com.termux/files/home/storage/music"
+    music_exts = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
+    
+    if not os.path_isdir(music_dir):
+        pytest.fail(f"niepoprawna sciezka z muzyka")
+    
+    _music_file_exist = False
+    for root, dirs, files in os.walk(music_library.music_dir):
+        if _music_file_exist:
+            break
+            for file in files:
+                ext = os.path.splitext(file)[1].lower()
+                if ext in music_library.music_exts:
+                    _music_file_exist = True
+                    break
+    else:
+        pytest.fail(f"sciezka z piosenkami nie zawiera muzyki")
