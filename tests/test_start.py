@@ -58,6 +58,7 @@ def test_libmpv():
         pytest.fail(f"Nie udało się odtworzyć audio")
 
 def test_music_dir_exists():
+    from music_serwer import music_library
     music_dir = "/data/data/com.termux/files/home/storage/music"
     music_exts = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
     
