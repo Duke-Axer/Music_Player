@@ -52,7 +52,7 @@ def test_libmpv():
         test_file = "tests/test.mp3"
         player = LibMPVPlayerThreaded()
         player.play(test_file)
-        time.sleep(3)
+        # time.sleep(3)
         player.stop()
     except:
         pytest.fail(f"Nie udało się odtworzyć audio")
@@ -66,10 +66,10 @@ def test_music_dir_exists():
     for root, dirs, files in os.walk(MusicLibrary.music_dir):
         if _music_file_exist:
             break
-            for file in files:
-                ext = os.path.splitext(file)[1].lower()
-                if ext in MusicLibrary.music_exts:
-                    _music_file_exist = True
-                    break
+        for file in files:
+            ext = os.path.splitext(file)[1].lower()
+            if ext in MusicLibrary.music_exts:
+                _music_file_exist = True
+                break
     else:
         pytest.fail(f"sciezka z piosenkami nie zawiera muzyki")
