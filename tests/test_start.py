@@ -45,3 +45,18 @@ def test_libmpv():
     except OSError:
         pytest.fail(f"nie mozna zaladowac libmpv.so")
     
+    try:
+        from music_serwer import LibMPVPlayerThreaded
+        test_file = "tests/test.mp3"
+        player = LibMPVPlayerThreaded()
+        player.play(test_file)
+        time.sleep(3)
+        player.stop()
+        import threading
+        t = threading.Thread(target=play_test)
+        t.start()
+        t.join()
+
+        print("Test odtworzenia zako?czony.")
+    except:
+        pytest.fail(f"Nie udało się odtworzyć audio")

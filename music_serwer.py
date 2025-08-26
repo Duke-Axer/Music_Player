@@ -71,6 +71,9 @@ class LibMPVPlayer:
         libmpv.mpv_command(self.player, arr)
 
     def play(self, file_path):
+        if file_path is None:
+            logging.warning("Nie podano pliku do odtworzenia")
+            return
         self._cmd("loadfile", file_path, "replace")
     
     def _event_loop(self):
@@ -111,7 +114,7 @@ class LibMPVPlayer:
 
 class LibMPVPlayerThreaded(LibMPVPlayer):
     def play_current_threaded(self):
-        t = threading.Thread(target=self.play)
+        t = threading.Thread(target=self.play, args=(file_path,))
         t.daemon = True  # wątek zakończy się przy zamknięciu programu
         t.start()
 
