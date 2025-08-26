@@ -61,7 +61,7 @@ def test_music_dir_exists():
     music_dir = "/data/data/com.termux/files/home/storage/music"
     music_exts = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
     
-    if not os.path_isdir(music_dir):
+    if not os.path.isdir(music_dir):
         pytest.fail(f"niepoprawna sciezka z muzyka")
     
     _music_file_exist = False
