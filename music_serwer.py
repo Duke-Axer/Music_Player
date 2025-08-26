@@ -13,7 +13,7 @@ MusicLibrary = None
 # Konfikuracja i tworzenie HTTP
 app = Flask(__name__)
 @app.route("/")
-def index()
+def index():
     render_template("index.html")
 
 
@@ -184,7 +184,7 @@ class MusicLibrary():
         return path
     def before():
         MusicLibrary.current_index_song -=1
-        if MusicLibrary.current_index_song = -1:
+        if MusicLibrary.current_index_song == -1:
             MusicLibrary.current_index_song = len(MusicLibrary.library)
         path = list(MusicLibrary.library.keys())[MusicLibrary.current_index_song]
         return path

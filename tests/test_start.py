@@ -43,5 +43,5 @@ def test_libmpv():
     try:
         lib = ctypes.CDLL(path)
     except OSError:
-        pytest.fail(f"zaladowac libmpv.so")
+        pytest.fail(f"nie mozna zaladowac libmpv.so")
     
