@@ -243,7 +243,7 @@ def test():
 
 if __name__ == "__main__":
     logging.debug("START")
-    player = LibMPVPlayer()
+    player = LibMPVPlayerThreaded()
     player.play_current_threaded()
     music_lib = MusicLibrary()
     app.run(host="0.0.0.0", port=5000)
