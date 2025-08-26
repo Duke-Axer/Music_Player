@@ -148,24 +148,24 @@ class MusicLibrary():
                 ext = os.path.splitext(file)[1].lower()
                 if ext in music_library.music_exts:
                     full_path = os.path.join(root, file)
-                    rel_path = os.path.relpath(full_path, music_library.music_dir).replace("\\", "/")
+                    rel_path = os.path.relpath(full_path, MusicLibrary.music_dir).replace("\\", "/")
                     music_files[rel_path] = []
 
         # Zapis do JSON
-        with open(music_library.info_file, "w", encoding="utf-8") as f:
+        with open(MusicLibrary.info_file, "w", encoding="utf-8") as f:
             json.dump(music_files, f, ensure_ascii=False, indent=4)
-            print(f"Zapisano {len(music_files)} plików muzycznych do '{music_library.info_file}'")
+            print(f"Zapisano {len(music_files)} plików muzycznych do '{MusicLibrary.info_file}'")
         self.read_dir_library()
 
     def read_dir_library(self):
         """Odczytuje plik JSON z informacjami o utworach i zwraca słownik."""
-        if not os.path.exists(music_library.info_file):
+        if not os.path.exists(MusicLibrary.info_file):
             print(f"Plik '{MusicLibrary.info_file}' nie istnieje.")
             MusicLibrary.full_library = {}
             self._create_info_file()
             return
 
-        with open(music_library.info_file, "r", encoding="utf-8") as f:
+        with open(MusicLibrary.info_file, "r", encoding="utf-8") as f:
             MusicLibrary.full_library = json.load(f)
 
     def change_music_tags(self):

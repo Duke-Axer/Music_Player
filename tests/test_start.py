@@ -58,20 +58,17 @@ def test_libmpv():
         pytest.fail(f"Nie udało się odtworzyć audio")
 
 def test_music_dir_exists():
-    from music_serwer import music_library
-    music_dir = "/data/data/com.termux/files/home/storage/music"
-    music_exts = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
-    
-    if not os.path.isdir(music_dir):
+    from music_serwer import MusicLibrary
+    if not os.path.isdir(MusicLibrary.music_dir):
         pytest.fail(f"niepoprawna sciezka z muzyka")
     
     _music_file_exist = False
-    for root, dirs, files in os.walk(music_library.music_dir):
+    for root, dirs, files in os.walk(MusicLibrary.music_dir):
         if _music_file_exist:
             break
             for file in files:
                 ext = os.path.splitext(file)[1].lower()
-                if ext in music_library.music_exts:
+                if ext in MusicLibrary.music_exts:
                     _music_file_exist = True
                     break
     else:
