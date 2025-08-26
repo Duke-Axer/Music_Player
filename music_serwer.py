@@ -28,6 +28,7 @@ logging.basicConfig(
 
 # Ładowanie biblioteki libmpv
 libmpv = ctypes.CDLL("libmpv.so")
+"""Inna sciezka /data/data/com.termux/files/usr/lib/libmpv.so"""
 
 # Definicje potrzebne do mpv_handle
 libmpv.mpv_create.restype = ctypes.c_void_p
