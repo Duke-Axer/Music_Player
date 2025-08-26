@@ -56,10 +56,10 @@ class LibMPVPlayer:
             cls._instance.counter = 0
             self.player = libmpv.mpv_create()
         if self.player is None:
-            logging.ERROR("Nie udało się utworzyć instancji mpv")
+            logging.error("Nie udało się utworzyć instancji mpv")
             raise RuntimeError("Nie udało się utworzyć instancji mpv")
         if libmpv.mpv_initialize(self.player) < 0:
-            logging.ERROR("Nie udało się zainicjalizować mpv")
+            logging.error("Nie udało się zainicjalizować mpv")
             raise RuntimeError("Nie udało się zainicjalizować mpv")
         return cls._instance
 
@@ -83,27 +83,27 @@ class LibMPVPlayer:
                 self._event_loop()
 
     def pause(self):
-        logging.DEBUG("LIBMPV - PAUSE")
+        logging.debug("LIBMPV - PAUSE")
         self._cmd("set_property", "pause", "yes")
 
     def resume(self):
-        logging.DEBUG("LIBMPV - RESUME")
+        logging.debug("LIBMPV - RESUME")
         self._cmd("set_property", "pause", "no")
 
     def stop(self):
-        logging.DEBUG("LIBMPV - STOP")
+        logging.debug("LIBMPV - STOP")
         self._cmd("stop")
 
     def set_volume(self, volume):
-        logging.DEBUG("LIBMPV - SET_VOLUME " + str(volume))
+        logging.debug("LIBMPV - SET_VOLUME " + str(volume))
         self._cmd("set_property", "volume", str(volume))
 
     def next(self, file_path):
-        logging.DEBUG("LIBMPV - NEXT")
+        logging.debug("LIBMPV - NEXT")
         self.play(file_path)
         
     def close(self):
-        logging.DEBUG("LIBMPV - CLOSE")
+        logging.debug("LIBMPV - CLOSE")
         libmpv.mpv_destroy(self.player)
         self.player = None
 
@@ -209,18 +209,18 @@ class PlayerCtrl():
 
 @app.route('/click', methods=['POST'])
 def click():
-    logging.DEBUG("Obtained Message")
+    logging.debug("Obtained Message")
     
     data = request.json
     button_id = data.get('button')
     if button_id == "stop":
-        logging.DEBUG("Message - STOP/RESUME")
+        logging.debug("Message - STOP/RESUME")
         PlayerCtrl.pause()
     elif button_id == "next":
-        logging.DEBUG("Message - NEXT")
+        logging.debug("Message - NEXT")
         PlayerCtrl.next()
     elif button_id == "before":
-        logging.DEBUG("Message - BEFORE")
+        logging.debug("Message - BEFORE")
         PlayerCtrl.before()
 
 @app.route("/stream")
@@ -242,7 +242,7 @@ def test():
     
 
 if __name__ == "__main__":
-    logging.DEBUG("START")
+    logging.debug("START")
     player = LibMPVPlayer()
     player.play_current_threaded()
     music_lib = MusicLibrary()
