@@ -52,6 +52,7 @@
 
     evtSource.onmessage = (event) => {
       log("Otrzymano: " + event.data, "ok");
+      console.log("otrzymano" + event.data, "ok")
     };
 
     evtSource.onerror = (err) => {
