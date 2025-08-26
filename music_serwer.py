@@ -55,7 +55,7 @@ class LibMPVPlayer:
             # tutaj możesz inicjalizować atrybuty
             cls._instance.counter = 0
             cls.player = libmpv.mpv_create()
-        if self.player is None:
+        if cls.player is None:
             logging.error("Nie udało się utworzyć instancji mpv")
             raise RuntimeError("Nie udało się utworzyć instancji mpv")
         if libmpv.mpv_initialize(self.player) < 0:
