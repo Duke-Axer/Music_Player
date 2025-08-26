@@ -48,6 +48,7 @@ def test_libmpv():
     
     try:
         from music_serwer import LibMPVPlayerThreaded
+        import time
         test_file = "tests/test.mp3"
         player = LibMPVPlayerThreaded()
         player.play(test_file)
