@@ -185,12 +185,13 @@ class LibMPVPlayer:
 
 
 class LibMPVPlayerThreaded(LibMPVPlayer):
-    def play_current_threaded(self, file_path=None):
-        if not self.player:
+    @classmethod
+    def play_current_threaded(cls, file_path=None):
+        if not cls.player:
             logging.warning("Player nie jest zainicjalizowany")
             return
             
-        t = threading.Thread(target=self.play, args=(file_path,))
+        t = threading.Thread(target=cls.play, args=(file_path,))
         t.daemon = True
         t.start()
 
