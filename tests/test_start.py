@@ -2,13 +2,8 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pytest
-import ctypes
-import threading
-import json
-import random
-import logging
 from flask import Flask, render_template,request, jsonify, Response
-
+    
 required_packages = [
     "ctypes",
     "os",
@@ -16,6 +11,7 @@ required_packages = [
     "random",
     "logging",
     "threading",
+    "json",
 ]
 
 @pytest.mark.parametrize("package", required_packages)
@@ -54,6 +50,18 @@ def test_libmpv():
         player.play(test_file)
         # time.sleep(3)
         player.stop()
+        try:
+            # testowanie zmiany glosnosci
+            player = LibMPVPlayerThreaded()
+            player.play(test_file)
+            player.set_volume(20)
+            time.sleep(1)
+            player.set_volume(100)
+            time.sleep(1)
+            player.set_volume(20)
+            time.sleep(1)
+            player.set_volume(100)
+            player.stop()
     except:
         pytest.fail(f"Nie udało się odtworzyć audio")
 
@@ -73,3 +81,48 @@ def test_music_dir_exists():
                 break
     else:
         pytest.fail(f"sciezka z piosenkami nie zawiera muzyki")
+
+def test_MusicLibrary():
+    import json
+    from music_serwer import MusicLibrary
+    MusicLibrary.music_dir = "tests"
+    MusicLibrary.info_file = "tests/info_music.json"
+    if os.path.exists(MusicLibrary.info_file):
+        os.remove(MusicLibrary.info_file)
+    try:
+        MusicLibrary._find_music_files()
+    except:
+        pytest.fail(f"Nie udalo sie wykonac utworzenia pliku: " + MusicLibrary.info_file)
+    else:
+        try:    
+            MusicLibrary.read_dir_library()
+        except:
+            pytest.fail (f"Nie udalo sie wykonac odczytania pliku: " + MusicLibrary.info_file)
+        else:
+            if not MusicLibrary.full_library == {"test.mp3": []}:
+                pytest.fail(f"zly format pliku json:" + str(MusicLibrary.full_library))
+    if os.path.exists(MusicLibrary.info_file):
+        os.remove(MusicLibrary.info_file)
+    with open(MusicLibrary.info_file, "w", encoding="utf-8") as f:
+        json.dump({"test.mp3": []}, f)
+    try:
+        MusicLibrary.change_music_tags(name_audio = "test.mp3", tag = "test_tag", add = True)
+    except:
+        pytest.fail(f"nie mozna dodac tagu")
+        
+    MusicLibrary.change_music_tags("test.mp3", "test_tag", add = True)
+    if not MusicLibrary.full_library == {"test.mp3": ["test_tag"]}:
+        pytest.fail(f"tag nie zostal dodany:" + str(MusicLibrary.full_library))
+    MusicLibrary._create_info_file()
+    MusicLibrary.full_library = {}
+    MusicLibrary.read_dir_library()
+    if not MusicLibrary.full_library == {"test.mp3": ["test_tag"]}:
+        pytest.fail(f"tag nie zostal zapisany do pliku json:" + str(MusicLibrary.full_library))
+    
+    
+        
+                
+        
+    
+    
+    
