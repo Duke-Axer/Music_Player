@@ -6,6 +6,7 @@ import random
 import logging
 import time
 from flask import Flask, render_template,request, jsonify, Response
+from flask_cors import CORS
 
 LibMPVPlayer = None
 MusicLibrary = None
@@ -13,6 +14,7 @@ MusicLibrary = None
 
 # Konfikuracja i tworzenie HTTP
 app = Flask(__name__)
+CORS(app)
 @app.route("/")
 def index():
     return render_template("index.html")
