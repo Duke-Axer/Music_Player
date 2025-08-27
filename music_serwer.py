@@ -365,6 +365,7 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask_server)
     flask_thread.daemon = True  # Wątek zakończy się gdy główny program się zakończy
     flask_thread.start()
-    print("Server started")
+    time.sleep(3)  # ← Dodaj 3 sekundy opóźnienia
+    print("Server should be ready now at http://127.0.0.1:5000")
     while True:
             time.sleep(1)
