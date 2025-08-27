@@ -65,10 +65,17 @@ class LibMPVPlayer:
             cls.player = libmpv.mpv_create()
         if cls.player is None:
             logging.error("Nie udało się utworzyć instancji mpv")
-            raise RuntimeError("Nie udało się utworzyć instancji mpv")
-        if libmpv.mpv_initialize(cls.player) < 0:
-            logging.error("Nie udało się zainicjalizować mpv")
-            raise RuntimeError("Nie udało się zainicjalizować mpv")
+            # Możesz podnieść błąd albo ustawić player na None
+            cls.player = None
+        else:
+            try:
+                ret = libmpv.mpv_initialize(cls.player)
+                if ret < 0:
+                    logging.error(f"Nie udało się zainicjalizować mpv, kod: {ret}")
+                    cls.player = None
+            except Exception as e:
+                logging.exception("Błąd podczas inicjalizacji mpv: %s", e)
+                cls.player = None
         return cls._instance
 
     def _cmd(self, *args):
