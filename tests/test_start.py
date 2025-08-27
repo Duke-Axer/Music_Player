@@ -62,6 +62,8 @@ def test_libmpv():
             time.sleep(1)
             player.set_volume(100)
             player.stop()
+        except:
+            pytest.fail(f"Nie udało się zmienić głośności")
     except:
         pytest.fail(f"Nie udało się odtworzyć audio")
 
