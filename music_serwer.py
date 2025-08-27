@@ -386,9 +386,9 @@ def test_post():
 
 def run_flask_server():
     """Uruchamia serwer Flask w osobnym wątku"""
-    print("Starting Flask server on http://0.0.0.0:5000")
+    print("Starting Flask server on http://0.0.0.0:8000")
     try:
-        app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+        app.run(host="0.0.0.0", port=8000, debug=True, use_reloader=False)
     except Exception as e:
         print(f"Flask server error: {e}")
         import traceback
@@ -410,6 +410,6 @@ if __name__ == "__main__":
     flask_thread.daemon = True  # Wątek zakończy się gdy główny program się zakończy
     flask_thread.start()
     time.sleep(3)  # ← Dodaj 3 sekundy opóźnienia
-    print("Server should be ready now at http://127.0.0.1:5000")
+    print("Server should be ready now at http://127.0.0.1:8000")
     while True:
             time.sleep(1)
