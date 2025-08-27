@@ -345,6 +345,10 @@ def stream():
             yield f"data: Serwer mówi: {time.ctime()}\n\n"
     return Response(event_stream(), mimetype="text/event-stream")
 
+def run_flask_server():
+    """Uruchamia serwer Flask w osobnym wątku"""
+    print("Starting Flask server on http://0.0.0.0:5000")
+    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)  # debug=False dla bezpieczeństwa
 
 if __name__ == "__main__":
     logging.debug("START")
@@ -358,6 +362,8 @@ if __name__ == "__main__":
     print("Creating music library")
     music_lib = MusicLibrary()
     print("Starting Flask server...")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    flask_thread = threading.Thread(target=run_flask_server)
+    flask_thread.daemon = True  # Wątek zakończy się gdy główny program się zakończy
+    flask_thread.start()
     print("Server started")
     
