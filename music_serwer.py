@@ -27,7 +27,10 @@ logging.basicConfig(
 )
 
 # Ładowanie biblioteki libmpv
-libmpv = ctypes.CDLL("libmpv.so")
+here = os.path.dirname(__file__)
+path_rasp = "/lib/arm-linux-gnueabihf/libmpv.so"
+libmpv_path = os.path.join(here, "libmpv.so")
+libmpv = ctypes.CDLL(libmpv_path)
 """Inna sciezka /data/data/com.termux/files/usr/lib/libmpv.so"""
 
 # Definicje potrzebne do mpv_handle
