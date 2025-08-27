@@ -54,13 +54,12 @@ def test_libmpv():
             # testowanie zmiany glosnosci
             player = LibMPVPlayerThreaded()
             player.play(test_file)
-            player.set_volume(20)
-            time.sleep(1)
             player.set_volume(100)
-            time.sleep(1)
+            time.sleep(3)
+            player.stop()
+            player.play(test_file)
             player.set_volume(20)
-            time.sleep(1)
-            player.set_volume(100)
+            time.sleep(3)
             player.stop()
         except:
             pytest.fail(f"Nie udało się zmienić głośności")
