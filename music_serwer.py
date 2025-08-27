@@ -411,10 +411,10 @@ def run_flask_server():
 
 if __name__ == "__main__":
     logging.debug("START")
-    player = LibMPVPlayerThreaded()
+    player = LibMPVPlayer()
     if player.player:
         print("Creating player")
-        player.play_current_threaded()
+        # player = LibMPVPlayer()
     else:
         logging.warning("player nie został zainicjowany")
         print("player nie został zainicjowany")
