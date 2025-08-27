@@ -32,73 +32,113 @@ here = os.path.dirname(__file__)
 path_rasp = "/lib/arm-linux-gnueabihf/libmpv.so"
 an_p = "/data/data/com.termux/files/usr/lib/libmpv.so"
 libmpv_path = os.path.join(here, "libmpv.so")
+
 try:
     libmpv = ctypes.CDLL(an_p)
-except:
-    libmpv = ctypes.CDLL(libmpv_path)
-"""Inna sciezka /data/data/com.termux/files/usr/lib/libmpv.so"""
+except Exception as e:
+    try:
+        libmpv = ctypes.CDLL(libmpv_path)
+    except Exception as e:
+        logging.error(f"Nie udało się załadować libmpv: {e}")
+        libmpv = None
 
 # Definicje potrzebne do mpv_handle
-libmpv.mpv_create.restype = ctypes.c_void_p
-libmpv.mpv_initialize.argtypes = [ctypes.c_void_p]
-libmpv.mpv_initialize.restype = ctypes.c_int
-libmpv.mpv_command.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p)]
-libmpv.mpv_command.restype = ctypes.c_int
-libmpv.mpv_destroy.argtypes = [ctypes.c_void_p]
+if libmpv:
+    libmpv.mpv_create.restype = ctypes.c_void_p
+    libmpv.mpv_initialize.argtypes = [ctypes.c_void_p]
+    libmpv.mpv_initialize.restype = ctypes.c_int
+    libmpv.mpv_command.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p)]
+    libmpv.mpv_command.restype = ctypes.c_int
+    libmpv.mpv_destroy.argtypes = [ctypes.c_void_p]
 
 class mpv_event(ctypes.Structure):
     _fields_ = [("event_id", ctypes.c_int)]
 
-libmpv.mpv_wait_event.argtypes = [ctypes.c_void_p, ctypes.c_double]
-libmpv.mpv_wait_event.restype = ctypes.POINTER(mpv_event)
+if libmpv:
+    libmpv.mpv_wait_event.argtypes = [ctypes.c_void_p, ctypes.c_double]
+    libmpv.mpv_wait_event.restype = ctypes.POINTER(mpv_event)
 
 MPV_EVENT_END_FILE = 4  # Zakończenie pliku
 
 class LibMPVPlayer:
     _instance = None
+    _initialized = False
     
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            # tutaj możesz inicjalizować atrybuty
+            # Inicjalizacja atrybutów
+            cls._instance.player = None
+            cls._instance.running = False
             cls._instance.counter = 0
-            cls.player = libmpv.mpv_create()
-        if cls.player is None:
-            logging.error("Nie udało się utworzyć instancji mpv")
-            # Możesz podnieść błąd albo ustawić player na None
-            cls.player = None
-        else:
-            try:
-                ret = libmpv.mpv_initialize(cls.player)
-                if ret < 0:
-                    logging.error(f"Nie udało się zainicjalizować mpv, kod: {ret}")
-                    cls.player = None
-            except Exception as e:
-                logging.exception("Błąd podczas inicjalizacji mpv: %s", e)
-                cls.player = None
+            
+            # Tworzenie instancji mpv tylko jeśli biblioteka jest dostępna
+            if libmpv:
+                try:
+                    cls._instance.player = libmpv.mpv_create()
+                    if cls._instance.player:
+                        ret = libmpv.mpv_initialize(cls._instance.player)
+                        if ret < 0:
+                            logging.error(f"Nie udało się zainicjalizować mpv, kod: {ret}")
+                            cls._instance.player = None
+                        else:
+                            cls._initialized = True
+                            logging.info("MPV zainicjalizowany pomyślnie")
+                    else:
+                        logging.error("Nie udało się utworzyć instancji mpv")
+                except Exception as e:
+                    logging.exception("Błąd podczas inicjalizacji mpv: %s", e)
+                    cls._instance.player = None
+            else:
+                logging.error("Biblioteka libmpv nie jest dostępna")
+        
         return cls._instance
 
     def _cmd(self, *args):
-        """Wywołanie polecenia mpv w formie listy stringów"""
-        arr = (ctypes.c_char_p * (len(args)+1))()
-        arr[:-1] = [s.encode("utf-8") for s in args]
-        arr[-1] = None
-        libmpv.mpv_command(self.player, arr)
+        """Wywołanie polecenia mpv"""
+        if not self.player:
+            logging.warning("Player nie jest zainicjalizowany")
+            return
+        
+        try:
+            arr = (ctypes.c_char_p * (len(args) + 1))()
+            arr[:-1] = [s.encode("utf-8") for s in args]
+            arr[-1] = None
+            libmpv.mpv_command(self.player, arr)
+        except Exception as e:
+            logging.error(f"Błąd podczas wykonywania polecenia: {e}")
 
     def play(self, file_path):
+        if not self.player:
+            logging.warning("Player nie jest zainicjalizowany")
+            return
+            
         if file_path is None:
             logging.warning("Nie podano pliku do odtworzenia")
             return
+            
+        if not os.path.exists(file_path):
+            logging.warning(f"Plik nie istnieje: {file_path}")
+            return
+            
         self._cmd("loadfile", file_path, "replace")
     
     def _event_loop(self):
+        if not self.player:
+            return
+            
+        self.running = True
         while self.running:
-            event_ptr = libmpv.mpv_wait_event(self.player, 0.1)  # timeout 0.1s
-            event = event_ptr.contents
-            if event.event_id == MPV_EVENT_END_FILE:
-                PlayerCtrl.next()
-                self.running = True
-                self._event_loop()
+            try:
+                event_ptr = libmpv.mpv_wait_event(self.player, 0.1)
+                if event_ptr:
+                    event = event_ptr.contents
+                    if event.event_id == MPV_EVENT_END_FILE:
+                        # Tutaj możesz dodać logikę dla końca pliku
+                        logging.info("Koniec pliku")
+            except Exception as e:
+                logging.error(f"Błąd w pętli zdarzeń: {e}")
+                break
 
     def pause(self):
         logging.debug("LIBMPV - PAUSE")
@@ -122,15 +162,24 @@ class LibMPVPlayer:
         
     def close(self):
         logging.debug("LIBMPV - CLOSE")
-        libmpv.mpv_destroy(self.player)
-        self.player = None
+        if self.player:
+            try:
+                libmpv.mpv_destroy(self.player)
+            except Exception as e:
+                logging.error(f"Błąd podczas zamykania player: {e}")
+            finally:
+                self.player = None
 
 
 
 class LibMPVPlayerThreaded(LibMPVPlayer):
-    def play_current_threaded(self, file_path = None):
+    def play_current_threaded(self, file_path=None):
+        if not self.player:
+            logging.warning("Player nie jest zainicjalizowany")
+            return
+            
         t = threading.Thread(target=self.play, args=(file_path,))
-        t.daemon = True  # wątek zakończy się przy zamknięciu programu
+        t.daemon = True
         t.start()
 
 
@@ -288,7 +337,11 @@ def stream():
 if __name__ == "__main__":
     logging.debug("START")
     player = LibMPVPlayerThreaded()
-    player.play_current_threaded()
+    if player.player:
+        player.play_current_threaded()
+    else:
+        logging.warning(f"player nie został zainicjowany")
+        print(f"player nie został zainicjowany")
     music_lib = MusicLibrary()
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=False)
     
