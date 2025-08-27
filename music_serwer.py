@@ -421,6 +421,13 @@ if __name__ == "__main__":
         print("Player created successfully")
         # Odtwórz pierwszą piosenkę jeśli biblioteka ma utwory
         music_lib = MusicLibrary()
+        music_lib.read_dir_library()
+        music_lib._find_music_files()
+        print(len(music_lib.full_library))
+        music_lib.do_library()
+        print(len(music_lib.library))
+
+
         if music_lib.library:
             first_song_path = os.path.join(music_lib.music_dir, music_lib.library[0])
             print(f"Playing first song: {first_song_path}")
