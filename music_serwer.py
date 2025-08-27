@@ -121,8 +121,8 @@ class LibMPVPlayer:
 
 
 class LibMPVPlayerThreaded(LibMPVPlayer):
-    def play_current_threaded(self):
-        t = threading.Thread(target=self.play) # , args=(file_path,)
+    def play_current_threaded(self, file_path = None):
+        t = threading.Thread(target=self.play, args=(file_path,))
         t.daemon = True  # wątek zakończy się przy zamknięciu programu
         t.start()
 
@@ -198,7 +198,7 @@ class MusicLibrary():
                 cls.full_library[name_audio].remove(tag)
         cls._json_file_is_actual = False
                 
-    @staticmethod
+    @classmethod
     def do_library(cls):
         """tworzy liste piosenek, ktore beda odtwarzane"""
         cls.library = []
@@ -206,7 +206,7 @@ class MusicLibrary():
             if not cls.tags or any(tag in cls.tags for tag in tags):
                 cls.library.append(song)
         cls.current_index_song = 0
-    @staticmethod
+    @classmethod
     def do_random(cls, yes = True):
         """ustawia randomowa kolejnosc w bibliotece"""
         if yes:
@@ -215,7 +215,7 @@ class MusicLibrary():
         else:
             cls.do_library()
             
-    @staticmethod
+    @classmethod
     def next(cls):
         cls.current_index_song +=1
         if cls.current_index_song > len(cls.library):
@@ -223,7 +223,7 @@ class MusicLibrary():
         path = list(cls.library.keys())[cls.current_index_song]
         return path
     
-    @staticmethod
+    @classmethod
     def before(cls):
         cls.current_index_song -=1
         if cls.current_index_song == -1:
