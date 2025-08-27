@@ -48,7 +48,7 @@ def test_libmpv():
         test_file = "tests/test.mp3"
         player = LibMPVPlayerThreaded()
         player.play(test_file)
-        # time.sleep(3)
+        time.sleep(3)
         player.stop()
         try:
             # testowanie zmiany glosnosci
