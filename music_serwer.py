@@ -30,9 +30,10 @@ logging.basicConfig(
 # Ładowanie biblioteki libmpv
 here = os.path.dirname(__file__)
 path_rasp = "/lib/arm-linux-gnueabihf/libmpv.so"
+an_p = "/data/data/com.termux/files/usr/lib/libmpv.so"
 libmpv_path = os.path.join(here, "libmpv.so")
 try:
-    libmpv = ctypes.CDLL(path_rasp)
+    libmpv = ctypes.CDLL(an_p)
 except:
     libmpv = ctypes.CDLL(libmpv_path)
 """Inna sciezka /data/data/com.termux/files/usr/lib/libmpv.so"""
