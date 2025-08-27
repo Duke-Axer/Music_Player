@@ -347,6 +347,15 @@ def stream():
             yield f"data: Serwer mówi: {time.ctime()}\n\n"
     return Response(event_stream(), mimetype="text/event-stream")
 
+@app.route('/test')
+def test_endpoint():
+    return jsonify({"status": "ok", "message": "Server is working!"})
+
+@app.route('/test-post', methods=['POST'])
+def test_post():
+    data = request.json
+    return jsonify({"status": "received", "data": data})
+
 def run_flask_server():
     """Uruchamia serwer Flask w osobnym wątku"""
     print("Starting Flask server on http://0.0.0.0:5000")

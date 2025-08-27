@@ -62,30 +62,40 @@
     async function sendCommand(buttonId) {
       setBusy(true);
       try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ button: buttonId })
-        });
+          console.log("🔄 Sending request to:", API_URL);
+          
+          const res = await fetch(API_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ button: buttonId })
+          });
 
-        const text = await res.text();
-        if (!res.ok) {
-          log(`Błąd ${res.status}: ${text || res.statusText}`, "err");
-        } else {
-          // Spróbuj sparsować JSON; jeśli się nie uda – pokaż surowy tekst
-          try {
-            const json = JSON.parse(text);
-            log(`OK: ${JSON.stringify(json)}`, "ok");
-          } catch {
-            log(`OK: ${text}`, "ok");
+          console.log("✅ Response status:", res.status);
+          const text = await res.text();
+          console.log("📄 Response text:", text);
+          
+          if (!res.ok) {
+              log(`Błąd ${res.status}: ${text || res.statusText}`, "err");
+          } else {
+              try {
+                  const json = JSON.parse(text);
+                  log(`OK: ${JSON.stringify(json)}`, "ok");
+              } catch {
+                  log(`OK: ${text}`, "ok");
+              }
           }
-        }
       } catch (e) {
-        log(`Wyjątek sieciowy: ${e}`, "err");
+          console.error("❌ Fetch error:", e);
+          log(`Błąd połączenia: ${e.message}`, "err");
+          
+          // Dodatkowe informacje diagnostyczne
+          if (e.name === 'TypeError' && e.message.includes('Failed to fetch')) {
+              log('Serwer nie odpowiada. Sprawdź czy Flask jest uruchomiony.', 'err');
+          }
       } finally {
-        setBusy(false);
+          setBusy(false);
       }
-    }
+  }
 
     // Obsługa kliknięć
     buttons.forEach(btn => {
