@@ -313,9 +313,11 @@ class PlayerCtrl():
 
 @app.route('/click', methods=['POST'])
 def click():
+    print("=== /click endpoint called ===")
     logging.debug("Obtained Message")
     try:
-        data = request.json
+        data = request.get_json()
+        print(f"Received data: {data}")
         if not data:
             return jsonify({"error": "No JSON data"}), 400
             
