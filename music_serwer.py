@@ -366,4 +366,5 @@ if __name__ == "__main__":
     flask_thread.daemon = True  # Wątek zakończy się gdy główny program się zakończy
     flask_thread.start()
     print("Server started")
-    
+    while True:
+            time.sleep(1)
