@@ -147,12 +147,12 @@ class LibMPVPlayer:
     @classmethod
     def pause(cls):
         logging.debug("LIBMPV - PAUSE")
-        cls._cmd("set_property", "pause", "yes")
+        cls._cmd("set", "pause", "yes")
 
     @classmethod
     def resume(cls):
         logging.debug("LIBMPV - RESUME")
-        cls._cmd("set_property", "pause", "no")
+        cls._cmd("set", "pause", "no")
 
     @classmethod
     def stop(cls):
@@ -339,47 +339,51 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-@app.route('/click', methods=['GET', 'POST'])  # ← Dodaj GET
+@app.route('/click', methods=['GET', 'POST'])
 def click():
     print("=== /click endpoint called ===")
     
-    if request.method == 'GET':
-        # Dla testowania GET
-        button_id = request.args.get('button')
-        print(f"GET request with button: {button_id}")
-        return jsonify({"status": "success", "button": button_id, "method": "GET"})
-    logging.debug("Obtained Message")
     try:
         data = request.get_json()
         print(f"Received data: {data}")
+        
         if not data:
             return jsonify({"error": "No JSON data"}), 400
             
         button_id = data.get('button')
         
-        if button_id == "test":  # ← Dodaj tę obsługę
-            print("✅ TEST button pressed - This message appears in Termux!")
+        if button_id == "test":
+            print("✅ TEST button pressed")
             return jsonify({"status": "success", "message": "Test received in terminal"})
             
         elif button_id == "stop":
-            logging.debug("Message - STOP/RESUME")
+            print("🔄 STOP/RESUME command")
             PlayerCtrl.pause()
+            
         elif button_id == "next":
-            logging.debug("Message - NEXT")
+            print("⏭️ NEXT command")
             PlayerCtrl.next()
+            
         elif button_id == "before":
-            logging.debug("Message - BEFORE")
+            print("⏮️ BEFORE command")
             PlayerCtrl.before()
+            
+        elif button_id == "volume":  # ← DODAJ OBSŁUGĘ GŁOŚNOŚCI
+            volume = data.get('volume', 50)
+            print(f"🔊 VOLUME change: {volume}%")
+            LibMPVPlayer.set_volume(volume)
+            
         else:
-            logging.warning(f"Unknown button: {button_id}")
+            print(f"❌ Unknown button: {button_id}")
             return jsonify({"error": "Unknown button"}), 400
             
         return jsonify({"status": "success", "button": button_id})
         
     except Exception as e:
-        logging.error(f"Error in click handler: {e}")
+        print(f"❌ ERROR in click handler: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
 @app.route("/stream")
 def stream():
     def event_stream():

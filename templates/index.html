@@ -32,6 +32,25 @@
       <button id="testBtn"   data-button="test">🧪 TEST</button>
     </div>
     
+    <div class="card">
+      <h1>Sterowanie odtwarzaczem (HTTP JSON)</h1>
+      <p class="hint">Kliknij przycisk – strona wyśle <code>{"button": "..."}</code> metodą POST do endpointu API.</p>
+
+      <!-- DODAJ TEN DIV Z KONTROLA GŁOŚNOŚCI -->
+      <div class="volume-control">
+          <label for="volumeSlider">Głośność: <span id="volumeValue">50</span>%</label>
+          <input type="range" id="volumeSlider" min="0" max="100" value="50" step="1">
+      </div>
+
+      <div class="grid">
+          <button id="beforeBtn" data-button="before">⏮️ BEFORE</button>
+          <button id="stopBtn"   data-button="stop">⏸️ STOP/RESUME</button>
+          <button id="nextBtn"   data-button="next">⏭️ NEXT</button>
+          <button id="testBtn"   data-button="test">🧪 TEST</button>
+      </div>
+
+      <div class="log" id="log">Czekam na akcję…</div>
+    </div>
 
     <div class="log" id="log">Czekam na akcję…</div>
   </div>
@@ -41,6 +60,10 @@
 
     const logEl = document.getElementById("log");
     const buttons = document.querySelectorAll("button[data-button]");
+
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeValue = document.getElementById('volumeValue');
+    let volumeChangeTimeout = null;
 
     function setBusy(busy) {
       buttons.forEach(b => b.disabled = busy);
@@ -60,6 +83,42 @@
     evtSource.onerror = (err) => {
       log("Błąd połączenia z /stream: " + err, "err");
     };
+
+    // Obsługa zmiany głośności
+    volumeSlider.addEventListener('input', (e) => {
+        const volume = parseInt(e.target.value);
+        volumeValue.textContent = volume;
+        
+        // Debounce - wysyłaj zmiany dopiero po 300ms od ostatniej zmiany
+        clearTimeout(volumeChangeTimeout);
+        volumeChangeTimeout = setTimeout(() => {
+            changeVolume(volume);
+        }, 300);
+    });
+
+    // Funkcja do wysyłania zmiany głośności
+    async function changeVolume(volume) {
+        setBusy(true);
+        try {
+            const res = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ button: "volume", volume: volume })
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                log(`Błąd zmiany głośności: ${text || res.statusText}`, "err");
+            } else {
+                log(`Głośność ustawiona na: ${volume}%`, "ok");
+            }
+        } catch (e) {
+            console.error("❌ Volume change error:", e);
+            log(`Błąd zmiany głośności: ${e.message}`, "err");
+        } finally {
+            setBusy(false);
+        }
+    }
 
     async function sendCommand(buttonId) {
       setBusy(true);
@@ -112,6 +171,22 @@
       if (k === "b") sendCommand("before");
       if (k === "s") sendCommand("stop");
       if (k === "n") sendCommand("next");
+    });
+
+    // Dodaj skrót klawiaturowy dla głośności
+    window.addEventListener('keydown', (e) => {
+        if (e.repeat) return;
+        const k = e.key.toLowerCase();
+        if (k === "arrowup") {
+            volumeSlider.value = Math.min(100, parseInt(volumeSlider.value) + 10);
+            volumeValue.textContent = volumeSlider.value;
+            changeVolume(parseInt(volumeSlider.value));
+        }
+        if (k === "arrowdown") {
+            volumeSlider.value = Math.max(0, parseInt(volumeSlider.value) - 10);
+            volumeValue.textContent = volumeSlider.value;
+            changeVolume(parseInt(volumeSlider.value));
+        }
     });
   </script>
 </body>
