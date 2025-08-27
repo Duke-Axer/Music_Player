@@ -4,6 +4,7 @@ import threading
 import json
 import random
 import logging
+import time
 from flask import Flask, render_template,request, jsonify, Response
 
 LibMPVPlayer = None
@@ -87,7 +88,7 @@ class LibMPVPlayer:
             event_ptr = libmpv.mpv_wait_event(self.player, 0.1)  # timeout 0.1s
             event = event_ptr.contents
             if event.event_id == MPV_EVENT_END_FILE:
-                self.next()
+                PlayerCtrl.next()
                 self.running = True
                 self._event_loop()
 
@@ -120,7 +121,7 @@ class LibMPVPlayer:
 
 class LibMPVPlayerThreaded(LibMPVPlayer):
     def play_current_threaded(self):
-        t = threading.Thread(target=self.play, args=(file_path,))
+        t = threading.Thread(target=self.play) # , args=(file_path,)
         t.daemon = True  # wątek zakończy się przy zamknięciu programu
         t.start()
 
@@ -222,7 +223,7 @@ class MusicLibrary():
         return path
     
     @staticmethod
-    def before():
+    def before(cls):
         cls.current_index_song -=1
         if cls.current_index_song == -1:
             cls.current_index_song = len(cls.library)
@@ -231,19 +232,23 @@ class MusicLibrary():
 
 class PlayerCtrl():
     global LibMPVPlayer, MusicLibrary
-    _isPause = False
-    def pause():
-        if _isPause:
+    _is_pause = False
+    @classmethod
+    def pause(cls):
+        if _is_pause:
             LibMPVPlayer.resume()
-            _isPause = False
+            _is_pause = False
         else:
             LibMPVPlayer.pause()
-            _isPause = True
-    def next():
+            _is_pause = True
+    @classmethod
+    def next(cls):
         LibMPVPlayer.next(MusicLibrary.next())
-    def before():
+    @classmethod
+    def before(cls):
         LibMPVPlayer.next(MusicLibrary.before())
-    def play():
+    @classmethod
+    def play(cls):
         LibMPVPlayer.play()
 
 
