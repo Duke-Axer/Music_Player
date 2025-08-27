@@ -373,7 +373,11 @@ def stream():
         while True:
             time.sleep(1)
             yield f"data: Serwer mówi: {time.ctime()}\n\n"
-    return Response(event_stream(), mimetype="text/event-stream")
+    
+    response = Response(event_stream(), mimetype="text/event-stream")
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Cache-Control', 'no-cache')
+    return response
 
 @app.route('/test')
 def test_endpoint():
