@@ -96,9 +96,10 @@ class LibMPVPlayer:
         
         return cls._instance
 
-    def _cmd(self, *args):
+    @classmethod
+    def _cmd(cls, *args):
         """Wywołanie polecenia mpv"""
-        if not self.player:
+        if not cls.player:
             logging.warning("Player nie jest zainicjalizowany")
             return
         
@@ -106,12 +107,13 @@ class LibMPVPlayer:
             arr = (ctypes.c_char_p * (len(args) + 1))()
             arr[:-1] = [s.encode("utf-8") for s in args]
             arr[-1] = None
-            libmpv.mpv_command(self.player, arr)
+            libmpv.mpv_command(cls.player, arr)
         except Exception as e:
             logging.error(f"Błąd podczas wykonywania polecenia: {e}")
 
-    def play(self, file_path):
-        if not self.player:
+    @classmethod
+    def play(cls, file_path):
+        if not cls.player:
             logging.warning("Player nie jest zainicjalizowany")
             return
             
@@ -123,16 +125,17 @@ class LibMPVPlayer:
             logging.warning(f"Plik nie istnieje: {file_path}")
             return
             
-        self._cmd("loadfile", file_path, "replace")
+        cls._cmd("loadfile", file_path, "replace")
     
-    def _event_loop(self):
-        if not self.player:
+    @classmethod
+    def _event_loop(cls):
+        if not cls.player:
             return
             
-        self.running = True
-        while self.running:
+        cls.running = True
+        while cls.running:
             try:
-                event_ptr = libmpv.mpv_wait_event(self.player, 0.1)
+                event_ptr = libmpv.mpv_wait_event(cls.player, 0.1)
                 if event_ptr:
                     event = event_ptr.contents
                     if event.event_id == MPV_EVENT_END_FILE:
@@ -142,35 +145,42 @@ class LibMPVPlayer:
                 logging.error(f"Błąd w pętli zdarzeń: {e}")
                 break
 
-    def pause(self):
+    @classmethod
+    def pause(cls):
         logging.debug("LIBMPV - PAUSE")
-        self._cmd("set_property", "pause", "yes")
+        cls._cmd("set_property", "pause", "yes")
 
-    def resume(self):
+    @classmethod
+    def resume(cls):
         logging.debug("LIBMPV - RESUME")
-        self._cmd("set_property", "pause", "no")
+        cls._cmd("set_property", "pause", "no")
 
-    def stop(self):
+    @classmethod
+    def stop(cls):
         logging.debug("LIBMPV - STOP")
-        self._cmd("stop")
+        cls._cmd("stop")
 
-    def set_volume(self, volume):
+    @classmethod
+    def set_volume(cls, volume):
         logging.debug("LIBMPV - SET_VOLUME " + str(volume))
-        self._cmd("set", "volume", str(volume))
+        cls._cmd("set", "volume", str(volume))
 
-    def next(self, file_path):
+    @classmethod
+    def next(cls, file_path):
         logging.debug("LIBMPV - NEXT")
-        self.play(file_path)
+        cls.play(file_path)
         
-    def close(self):
+    
+    @classmethod
+    def close(cls):
         logging.debug("LIBMPV - CLOSE")
-        if self.player:
+        if cls.player:
             try:
-                libmpv.mpv_destroy(self.player)
+                libmpv.mpv_destroy(cls.player)
             except Exception as e:
                 logging.error(f"Błąd podczas zamykania player: {e}")
             finally:
-                self.player = None
+                cls.player = None
 
 
 
