@@ -388,7 +388,7 @@ def run_flask_server():
     """Uruchamia serwer Flask w osobnym wątku"""
     print("Starting Flask server on http://0.0.0.0:8000")
     try:
-        app.run(host="0.0.0.0", port=8000, debug=True, use_reloader=False)
+        app.run(host="0.0.0.0", port=8000, debug=True, use_reloader=False, threaded=True)
     except Exception as e:
         print(f"Flask server error: {e}")
         import traceback

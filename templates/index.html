@@ -69,7 +69,8 @@
           const res = await fetch(API_URL, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ button: buttonId })
+              body: JSON.stringify({ button: buttonId }),
+              signal: AbortSignal.timeout(5000) // 5 sekund timeout
           });
 
           console.log("✅ Response status:", res.status);
