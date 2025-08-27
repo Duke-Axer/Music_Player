@@ -348,7 +348,12 @@ def stream():
 def run_flask_server():
     """Uruchamia serwer Flask w osobnym wątku"""
     print("Starting Flask server on http://0.0.0.0:5000")
-    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)  # debug=False dla bezpieczeństwa
+    try:
+        app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    except Exception as e:
+        print(f"Flask server error: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     logging.debug("START")
