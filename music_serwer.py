@@ -154,7 +154,7 @@ class LibMPVPlayer:
 
     def set_volume(self, volume):
         logging.debug("LIBMPV - SET_VOLUME " + str(volume))
-        self._cmd("set_property", "volume", str(volume))
+        self._cmd("set", "volume", str(volume))
 
     def next(self, file_path):
         logging.debug("LIBMPV - NEXT")
