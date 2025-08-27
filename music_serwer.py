@@ -65,24 +65,23 @@ MPV_EVENT_END_FILE = 4  # Zakończenie pliku
 class LibMPVPlayer:
     _instance = None
     _initialized = False
+    player = None 
+    running = False
+    counter = 0
     
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            # Inicjalizacja atrybutów
-            cls._instance.player = None
-            cls._instance.running = False
-            cls._instance.counter = 0
             
             # Tworzenie instancji mpv tylko jeśli biblioteka jest dostępna
             if libmpv:
                 try:
-                    cls._instance.player = libmpv.mpv_create()
-                    if cls._instance.player:
-                        ret = libmpv.mpv_initialize(cls._instance.player)
+                    cls.player = libmpv.mpv_create()  
+                    if cls.player:
+                        ret = libmpv.mpv_initialize(cls.player)
                         if ret < 0:
                             logging.error(f"Nie udało się zainicjalizować mpv, kod: {ret}")
-                            cls._instance.player = None
+                            cls.player = None
                         else:
                             cls._initialized = True
                             logging.info("MPV zainicjalizowany pomyślnie")
@@ -90,7 +89,7 @@ class LibMPVPlayer:
                         logging.error("Nie udało się utworzyć instancji mpv")
                 except Exception as e:
                     logging.exception("Błąd podczas inicjalizacji mpv: %s", e)
-                    cls._instance.player = None
+                    cls.player = None
             else:
                 logging.error("Biblioteka libmpv nie jest dostępna")
         
@@ -305,12 +304,15 @@ class PlayerCtrl():
     _is_pause = False
     @classmethod
     def pause(cls):
-        if cls._is_pause:
-            LibMPVPlayer.resume()
-            cls._is_pause = False
+        if LibMPVPlayer.player:  # ← ZMIENIONE: LibMPVPlayer.player zamiast LibMPVPlayer._instance.player
+            if cls._is_pause:
+                LibMPVPlayer.resume()
+                cls._is_pause = False
+            else:
+                LibMPVPlayer.pause()
+                cls._is_pause = True
         else:
-            LibMPVPlayer.pause()
-            cls._is_pause = True
+            logging.warning("Player not initialized!")
     @classmethod
     def next(cls):
         LibMPVPlayer.next(MusicLibrary.next())
@@ -411,20 +413,29 @@ def run_flask_server():
 
 if __name__ == "__main__":
     logging.debug("START")
+    
+    # Inicjalizuj player
     player = LibMPVPlayer()
-    if player.player:
-        print("Creating player")
-        # player = LibMPVPlayer()
+    
+    if LibMPVPlayer.player:
+        print("Player created successfully")
+        # Odtwórz pierwszą piosenkę jeśli biblioteka ma utwory
+        music_lib = MusicLibrary()
+        if music_lib.library:
+            first_song_path = os.path.join(music_lib.music_dir, music_lib.library[0])
+            print(f"Playing first song: {first_song_path}")
+            LibMPVPlayer.play(first_song_path)
     else:
-        logging.warning("player nie został zainicjowany")
+        logging.warning("Player nie został zainicjowany")
         print("player nie został zainicjowany")
-    print("Creating music library")
-    music_lib = MusicLibrary()
+    
     print("Starting Flask server...")
     flask_thread = threading.Thread(target=run_flask_server)
-    flask_thread.daemon = True  # Wątek zakończy się gdy główny program się zakończy
+    flask_thread.daemon = True
     flask_thread.start()
-    time.sleep(3)  # ← Dodaj 3 sekundy opóźnienia
+    
+    time.sleep(3)
     print("Server should be ready now at http://127.0.0.1:8000")
+    
     while True:
-            time.sleep(1)
+        time.sleep(1)
