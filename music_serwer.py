@@ -390,13 +390,13 @@ def run_flask_server():
 
 if __name__ == "__main__":
     logging.debug("START")
-    player = LibMPVPlayerThreaded()
-    if player.player:
-        print("Creating player")
-        player.play_current_threaded()
-    else:
-        logging.warning("player nie został zainicjowany")
-        print("player nie został zainicjowany")
+    # player = LibMPVPlayerThreaded()
+    # if player.player:
+    #     print("Creating player")
+    #     player.play_current_threaded()
+    # else:
+    #     logging.warning("player nie został zainicjowany")
+    #     print("player nie został zainicjowany")
     print("Creating music library")
     music_lib = MusicLibrary()
     print("Starting Flask server...")
