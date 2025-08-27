@@ -15,7 +15,7 @@ MusicLibrary = None
 app = Flask(__name__)
 @app.route("/")
 def index():
-    render_template("index.html")
+    return render_template("index.html")
 
 
 
@@ -276,16 +276,16 @@ class MusicLibrary():
         cls.current_index_song +=1
         if cls.current_index_song > len(cls.library):
             cls.current_index_song = 0
-        path = list(cls.library.keys())[cls.current_index_song]
-        return path
+        path = cls.library[cls.current_index_song]
+        return os.path.join(cls.music_dir, path)
     
     @classmethod
     def before(cls):
         cls.current_index_song -=1
         if cls.current_index_song == -1:
             cls.current_index_song = len(cls.library)
-        path = list(cls.library.keys())[cls.current_index_song]
-        return path
+        path = cls.library[cls.current_index_song]
+        return os.path.join(cls.music_dir, path)
 
 class PlayerCtrl():
     global LibMPVPlayer, MusicLibrary
@@ -312,18 +312,30 @@ class PlayerCtrl():
 @app.route('/click', methods=['POST'])
 def click():
     logging.debug("Obtained Message")
-    
-    data = request.json
-    button_id = data.get('button')
-    if button_id == "stop":
-        logging.debug("Message - STOP/RESUME")
-        PlayerCtrl.pause()
-    elif button_id == "next":
-        logging.debug("Message - NEXT")
-        PlayerCtrl.next()
-    elif button_id == "before":
-        logging.debug("Message - BEFORE")
-        PlayerCtrl.before()
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data"}), 400
+            
+        button_id = data.get('button')
+        if button_id == "stop":
+            logging.debug("Message - STOP/RESUME")
+            PlayerCtrl.pause()
+        elif button_id == "next":
+            logging.debug("Message - NEXT")
+            PlayerCtrl.next()
+        elif button_id == "before":
+            logging.debug("Message - BEFORE")
+            PlayerCtrl.before()
+        else:
+            logging.warning(f"Unknown button: {button_id}")
+            return jsonify({"error": "Unknown button"}), 400
+            
+        return jsonify({"status": "success", "button": button_id})
+        
+    except Exception as e:
+        logging.error(f"Error in click handler: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/stream")
 def stream():
@@ -340,8 +352,8 @@ if __name__ == "__main__":
     if player.player:
         player.play_current_threaded()
     else:
-        logging.warning(f"player nie został zainicjowany")
-        print(f"player nie został zainicjowany")
+        logging.warning("player nie został zainicjowany")
+        print("player nie został zainicjowany")
     music_lib = MusicLibrary()
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=True)
     

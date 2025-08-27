@@ -52,11 +52,6 @@ def test_libmpv():
         player.stop()
         try:
             # testowanie zmiany glosnosci
-            player = LibMPVPlayerThreaded()
-            player.play(test_file)
-            player.set_volume(100)
-            time.sleep(3)
-            player.stop()
             player.play(test_file)
             player.set_volume(20)
             time.sleep(3)
