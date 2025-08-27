@@ -21,22 +21,11 @@
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Sterowanie odtwarzaczem (HTTP JSON)</h1>
-    <p class="hint">Kliknij przycisk – strona wyśle <code>{"button": "..."}</code> metodą POST do endpointu API.</p>
-
-    <div class="grid">
-      <button id="beforeBtn" data-button="before">⏮️ BEFORE</button>
-      <button id="stopBtn"   data-button="stop">⏸️ STOP/RESUME</button>
-      <button id="nextBtn"   data-button="next">⏭️ NEXT</button>
-      <button id="testBtn"   data-button="test">🧪 TEST</button>
-    </div>
-    
+  
     <div class="card">
       <h1>Sterowanie odtwarzaczem (HTTP JSON)</h1>
       <p class="hint">Kliknij przycisk – strona wyśle <code>{"button": "..."}</code> metodą POST do endpointu API.</p>
 
-      <!-- DODAJ TEN DIV Z KONTROLA GŁOŚNOŚCI -->
       <div class="volume-control">
           <label for="volumeSlider">Głośność: <span id="volumeValue">50</span>%</label>
           <input type="range" id="volumeSlider" min="0" max="100" value="50" step="1">
