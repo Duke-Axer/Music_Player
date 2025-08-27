@@ -326,9 +326,15 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-@app.route('/click', methods=['POST'])
+@app.route('/click', methods=['GET', 'POST'])  # ← Dodaj GET
 def click():
     print("=== /click endpoint called ===")
+    
+    if request.method == 'GET':
+        # Dla testowania GET
+        button_id = request.args.get('button')
+        print(f"GET request with button: {button_id}")
+        return jsonify({"status": "success", "button": button_id, "method": "GET"})
     logging.debug("Obtained Message")
     try:
         data = request.get_json()
