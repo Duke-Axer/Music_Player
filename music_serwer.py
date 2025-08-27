@@ -243,12 +243,12 @@ class PlayerCtrl():
     _is_pause = False
     @classmethod
     def pause(cls):
-        if _is_pause:
+        if cls._is_pause:
             LibMPVPlayer.resume()
-            _is_pause = False
+            cls._is_pause = False
         else:
             LibMPVPlayer.pause()
-            _is_pause = True
+            cls._is_pause = True
     @classmethod
     def next(cls):
         LibMPVPlayer.next(MusicLibrary.next())
