@@ -337,7 +337,12 @@ def click():
             return jsonify({"error": "No JSON data"}), 400
             
         button_id = data.get('button')
-        if button_id == "stop":
+        
+        if button_id == "test":  # ← Dodaj tę obsługę
+            print("✅ TEST button pressed - This message appears in Termux!")
+            return jsonify({"status": "success", "message": "Test received in terminal"})
+            
+        elif button_id == "stop":
             logging.debug("Message - STOP/RESUME")
             PlayerCtrl.pause()
         elif button_id == "next":
