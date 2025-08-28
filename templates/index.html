@@ -25,6 +25,8 @@
     <div class="card">
       <h1>Sterowanie odtwarzaczem (HTTP JSON)</h1>
       <p class="hint">Kliknij przycisk – strona wyśle <code>{"button": "..."}</code> metodą POST do endpointu API.</p>
+      
+      <p>Aktualnie grana piosenka: <span id="currentSong">Brak</span></p>
 
       <div class="volume-control">
           <label for="volumeSlider">Głośność: <span id="volumeValue">50</span>%</label>
@@ -57,7 +59,16 @@
     function setBusy(busy) {
       buttons.forEach(b => b.disabled = busy);
     }
+    
+    const currentSongEl = document.getElementById("currentSong");
 
+    const evtSource = new EventSource("/stream");
+    evtSource.onmessage = (event) => {
+        currentSongEl.textContent = event.data;
+        log("Odtwarzana piosenka: " + event.data, "ok");
+    };
+
+    
     function log(msg, cls = "") {
       logEl.innerHTML = `<span class="${cls}">${new Date().toLocaleTimeString()} — ${msg}</span>\n` + logEl.innerHTML;
     }

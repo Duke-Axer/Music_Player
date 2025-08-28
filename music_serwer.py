@@ -7,6 +7,7 @@ import logging
 import time
 from flask import Flask, render_template,request, jsonify, Response
 from flask_cors import CORS
+from queue import Queue
 
 LibMPVPlayer = None
 MusicLibrary = None
@@ -15,7 +16,11 @@ from scripts.settings import paths, server
 from scripts.lib_mpv_player import *
 
 
+song_update_queue = Queue()
 
+def notify_current_song(song_path):
+    song_name = os.path.basename(song_path)
+    song_update_queue.put(song_name)
 
 # Konfikuracja i tworzenie HTTP
 app = Flask(__name__)
@@ -166,13 +171,20 @@ class PlayerCtrl():
             logging.warning("Player not initialized!")
     @classmethod
     def next(cls):
-        LibMPVPlayer.next(MusicLibrary.next())
+        path = MusicLibrary.next()
+        LibMPVPlayer.next(path)
+        notify_current_song(path)
     @classmethod
     def before(cls):
-        LibMPVPlayer.next(MusicLibrary.before())
+        path = MusicLibrary.before()
+        LibMPVPlayer.next(path)
+        notify_current_song(path)
     @classmethod
     def play(cls):
         LibMPVPlayer.play()
+        if MusicLibrary.library:
+            notify_current_song(os.path.join(MusicLibrary.music_dir, 
+            MusicLibrary.library[MusicLibrary.current_index_song]))
 
 @app.before_request
 def handle_options():
@@ -219,7 +231,7 @@ def click():
             print("⏮️ BEFORE command")
             PlayerCtrl.before()
             
-        elif button_id == "volume":  # ← DODAJ OBSŁUGĘ GŁOŚNOŚCI
+        elif button_id == "volume":
             volume = data.get('volume', 50)
             print(f"🔊 VOLUME change: {volume}%")
             LibMPVPlayer.set_volume(volume)
@@ -239,13 +251,9 @@ def click():
 def stream():
     def event_stream():
         while True:
-            time.sleep(1)
-            yield f"data: Serwer mówi: {time.ctime()}\n\n"
-    
-    response = Response(event_stream(), mimetype="text/event-stream")
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Cache-Control', 'no-cache')
-    return response
+            song_name = song_update_queue.get()  # czeka na nową wiadomość
+            yield f"data: {song_name}\n\n"
+    return Response(event_stream(), mimetype="text/event-stream")
 
 @app.route('/test')
 def test_endpoint():
