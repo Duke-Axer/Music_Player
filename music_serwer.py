@@ -8,12 +8,13 @@ import time
 from flask import Flask, render_template,request, jsonify, Response
 from flask_cors import CORS
 
+LibMPVPlayer = None
+MusicLibrary = None
 
 from scripts.settings import paths, server
 from scripts.lib_mpv_player import *
 
-LibMPVPlayer = None
-MusicLibrary = None
+
 
 
 # Konfikuracja i tworzenie HTTP
