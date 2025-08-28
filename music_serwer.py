@@ -146,7 +146,7 @@ class MusicLibrary():
     def before(cls):
         cls.current_index_song -=1
         if cls.current_index_song == -1:
-            cls.current_index_song = len(cls.library)
+            cls.current_index_song = len(cls.library) -1
         path = cls.library[cls.current_index_song]
         return os.path.join(cls.music_dir, path)
 
