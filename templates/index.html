@@ -45,7 +45,7 @@
   </div>
 
   <script>
-    const API_URL = "http://192.168.0.106:8000/click";
+    const API_URL = "{{ api_url }}";
 
     const logEl = document.getElementById("log");
     const buttons = document.querySelectorAll("button[data-button]");
@@ -162,7 +162,7 @@
       if (k === "n") sendCommand("next");
     });
 
-    // Dodaj skrót klawiaturowy dla głośności
+    // skrót klawiaturowy dla głośności
     window.addEventListener('keydown', (e) => {
         if (e.repeat) return;
         const k = e.key.toLowerCase();
