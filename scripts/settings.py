@@ -12,5 +12,6 @@ class paths():
 class server():
 	port = 8000
 	address = "192.168.0.106"
-	def get_address(self):
-		return "http://" + server.address + ":" + str(server.port)
+	@classmethod
+	def get_address(cls):
+		return "http://" + cls.address + ":" + str(cls.port)
