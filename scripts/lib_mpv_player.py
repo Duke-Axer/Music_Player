@@ -1,4 +1,5 @@
 """Obsluga libmpv"""
+import os
 import ctypes
 import logging
 logger = logging.getLogger(__name__)
