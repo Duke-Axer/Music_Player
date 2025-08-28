@@ -60,24 +60,19 @@
       buttons.forEach(b => b.disabled = busy);
     }
     
-    const currentSongEl = document.getElementById("currentSong");
-
-    const evtSource = new EventSource("/stream");
-    evtSource.onmessage = (event) => {
-        currentSongEl.textContent = event.data;
-        log("Odtwarzana piosenka: " + event.data, "ok");
-    };
+    
 
     
     function log(msg, cls = "") {
       logEl.innerHTML = `<span class="${cls}">${new Date().toLocaleTimeString()} — ${msg}</span>\n` + logEl.innerHTML;
     }
     // --- STREAM z serwera ---
+    const currentSongEl = document.getElementById("currentSong");
+    
     const evtSource = new EventSource("/stream");
-
     evtSource.onmessage = (event) => {
-      log("Otrzymano: " + event.data, "ok");
-      console.log("otrzymano" + event.data, "ok")
+        currentSongEl.textContent = event.data;
+        log("Odtwarzana piosenka: " + event.data, "ok");
     };
 
     evtSource.onerror = (err) => {
