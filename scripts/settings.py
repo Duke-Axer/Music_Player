@@ -14,4 +14,4 @@ class server():
 	address = "192.168.0.106"
 	@classmethod
 	def get_address(cls):
-		return "http://" + cls.address + ":" + str(cls.port)
+		return "http://" + cls.address + ":" + str(cls.port) + "/click"
