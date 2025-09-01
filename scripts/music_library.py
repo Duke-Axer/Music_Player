@@ -4,7 +4,7 @@ import os
 import json
 import random
 
-from scripts.settings.py import paths
+from scripts.settings import paths
 
 class MusicLibrary():
     tags = [] 
