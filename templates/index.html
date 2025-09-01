@@ -4,185 +4,34 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sterowanie odtwarzaczem</title>
-  <style>
-    :root { font-family: system-ui, Arial, sans-serif; }
-    body { margin: 0; display: grid; place-items: center; min-height: 100vh; background: #0f172a; color: #e2e8f0; }
-    .card { width: min(680px, 92vw); background: #111827; border: 1px solid #273449; border-radius: 18px; padding: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
-    h1 { margin: 0 0 14px; font-size: 1.25rem; }
-    p.hint { margin: 6px 0 18px; color: #94a3b8; font-size: .95rem; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    button { cursor: pointer; border: 0; padding: 14px 12px; border-radius: 12px; font-weight: 600; background: #1f2937; color: #e5e7eb; transition: transform .06s ease, background .2s; }
-    button:hover { background: #374151; transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
-    button[disabled] { opacity: .6; cursor: progress; }
-    .log { margin-top: 16px; padding: 12px; background: #0b1220; border: 1px solid #233147; border-radius: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow: auto; }
-    .ok { color: #86efac; }
-    .err { color: #fca5a5; }
-  </style>
 </head>
 <body>
-  
-    <div class="card">
-      <h1>Sterowanie odtwarzaczem (HTTP JSON)</h1>
-      <p class="hint">Kliknij przycisk – strona wyśle <code>{"button": "..."}</code> metodą POST do endpointu API.</p>
-      
-      <p>Aktualnie grana piosenka: <span id="currentSong">Brak</span></p>
+<div class="card">
+  <h1>Sterowanie odtwarzaczem (HTTP JSON)</h1>
+  <p class="hint">Kliknij przycisk – strona wyśle <code>{"button": "..."}</code> metodą POST do endpointu API.</p>
 
-      <div class="volume-control">
-          <label for="volumeSlider">Głośność: <span id="volumeValue">50</span>%</label>
-          <input type="range" id="volumeSlider" min="0" max="100" value="50" step="1">
-      </div>
+  <p>Aktualnie grana piosenka: <span id="currentSong">Brak</span></p>
 
-      <div class="grid">
-          <button id="beforeBtn" data-button="before">⏮️ BEFORE</button>
-          <button id="stopBtn"   data-button="stop">⏸️ STOP/RESUME</button>
-          <button id="nextBtn"   data-button="next">⏭️ NEXT</button>
-          <button id="testBtn"   data-button="test">🧪 TEST</button>
-      </div>
-
-      <div class="log" id="log">Czekam na akcję…</div>
-    </div>
-
-    <div class="log" id="log">Czekam na akcję…</div>
+  <div class="volume-control">
+    <label for="volumeSlider">Głośność: <span id="volumeValue">50</span>%</label>
+    <input type="range" id="volumeSlider" min="0" max="100" value="50" step="1">
   </div>
 
-  <script>
-    const API_URL = "{{ api_url }}";
+  <div class="grid">
+    <button id="beforeBtn" data-button="before">⏮️ BEFORE</button>
+    <button id="stopBtn"   data-button="stop">⏸️ STOP/RESUME</button>
+    <button id="nextBtn"   data-button="next">⏭️ NEXT</button>
+    <button id="testBtn"   data-button="test">🧪 TEST</button>
+    <button id="rndBtn" data-button="random"> random</button>
+  </div>
 
-    const logEl = document.getElementById("log");
-    const buttons = document.querySelectorAll("button[data-button]");
+  <div class="log" id="log">Czekam na akcję…</div>
+  </div>
 
-    const volumeSlider = document.getElementById('volumeSlider');
-    const volumeValue = document.getElementById('volumeValue');
-    let volumeChangeTimeout = null;
+  <div class="log" id="log">Czekam na akcję…</div>
+</div>
 
-    function setBusy(busy) {
-      buttons.forEach(b => b.disabled = busy);
-    }
-    
-    
-
-    
-    function log(msg, cls = "") {
-      logEl.innerHTML = `<span class="${cls}">${new Date().toLocaleTimeString()} — ${msg}</span>\n` + logEl.innerHTML;
-    }
-    // --- STREAM z serwera ---
-    const currentSongEl = document.getElementById("currentSong");
-    
-    const evtSource = new EventSource("/stream");
-    evtSource.onmessage = (event) => {
-        currentSongEl.textContent = event.data;
-        log("Odtwarzana piosenka: " + event.data, "ok");
-    };
-
-    evtSource.onerror = (err) => {
-      log("Błąd połączenia z /stream: " + err, "err");
-    };
-
-    // Obsługa zmiany głośności
-    volumeSlider.addEventListener('input', (e) => {
-        const volume = parseInt(e.target.value);
-        volumeValue.textContent = volume;
-        
-        // Debounce - wysyłaj zmiany dopiero po 300ms od ostatniej zmiany
-        clearTimeout(volumeChangeTimeout);
-        volumeChangeTimeout = setTimeout(() => {
-            changeVolume(volume);
-        }, 300);
-    });
-
-    // Funkcja do wysyłania zmiany głośności
-    async function changeVolume(volume) {
-        setBusy(true);
-        try {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ button: "volume", volume: volume })
-            });
-
-            if (!res.ok) {
-                const text = await res.text();
-                log(`Błąd zmiany głośności: ${text || res.statusText}`, "err");
-            } else {
-                log(`Głośność ustawiona na: ${volume}%`, "ok");
-            }
-        } catch (e) {
-            console.error("❌ Volume change error:", e);
-            log(`Błąd zmiany głośności: ${e.message}`, "err");
-        } finally {
-            setBusy(false);
-        }
-    }
-
-    async function sendCommand(buttonId) {
-      setBusy(true);
-      try {
-          console.log("🔄 Sending request to:", API_URL);
-          
-          const res = await fetch(API_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ button: buttonId }),
-              signal: AbortSignal.timeout(5000) // 5 sekund timeout
-          });
-
-          console.log("✅ Response status:", res.status);
-          const text = await res.text();
-          console.log("📄 Response text:", text);
-          
-          if (!res.ok) {
-              log(`Błąd ${res.status}: ${text || res.statusText}`, "err");
-          } else {
-              try {
-                  const json = JSON.parse(text);
-                  log(`OK: ${JSON.stringify(json)}`, "ok");
-              } catch {
-                  log(`OK: ${text}`, "ok");
-              }
-          }
-      } catch (e) {
-          console.error("❌ Fetch error:", e);
-          log(`Błąd połączenia: ${e.message}`, "err");
-          
-          // Dodatkowe informacje diagnostyczne
-          if (e.name === 'TypeError' && e.message.includes('Failed to fetch')) {
-              log('Serwer nie odpowiada. Sprawdź czy Flask jest uruchomiony.', 'err');
-          }
-      } finally {
-          setBusy(false);
-      }
-  }
-
-    // Obsługa kliknięć
-    buttons.forEach(btn => {
-      btn.addEventListener("click", () => sendCommand(btn.dataset.button));
-    });
-
-    // skróty klawiaturowe: B=before, S=stop, N=next
-    window.addEventListener("keydown", (e) => {
-      if (e.repeat) return;
-      const k = e.key.toLowerCase();
-      if (k === "b") sendCommand("before");
-      if (k === "s") sendCommand("stop");
-      if (k === "n") sendCommand("next");
-    });
-
-    // skrót klawiaturowy dla głośności
-    window.addEventListener('keydown', (e) => {
-        if (e.repeat) return;
-        const k = e.key.toLowerCase();
-        if (k === "arrowup") {
-            volumeSlider.value = Math.min(100, parseInt(volumeSlider.value) + 10);
-            volumeValue.textContent = volumeSlider.value;
-            changeVolume(parseInt(volumeSlider.value));
-        }
-        if (k === "arrowdown") {
-            volumeSlider.value = Math.max(0, parseInt(volumeSlider.value) - 10);
-            volumeValue.textContent = volumeSlider.value;
-            changeVolume(parseInt(volumeSlider.value));
-        }
-    });
-  </script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </body>
 </html>

@@ -14,13 +14,11 @@ MusicLibrary = None
 
 from scripts.settings import paths, server
 from scripts.lib_mpv_player import *
+from scripts.music_library import MusicLibrary
 
 
 song_update_queue = Queue()
 
-def notify_current_song(song_path):
-    song_name = os.path.basename(song_path)
-    song_update_queue.put(song_name)
 
 # Konfikuracja i tworzenie HTTP
 app = Flask(__name__)
@@ -49,111 +47,6 @@ class LibMPVPlayerThreaded(LibMPVPlayer):
         t = threading.Thread(target=cls.play, args=(file_path,))
         t.daemon = True
         t.start()
-
-
-class MusicLibrary():
-    tags = [] 
-    """Tagi piosenek które będą w biblitece, brak oznacza, że wszystkie będą dodane"""
-    full_library: dict[str, list[str]] = {}
-    """dict[str, list[str]], zawiera wszystkie dostępne piosenki i ich aktualne dane"""
-    library = []
-    """Zawiera ścieżki do piosenek z albumu"""
-    current_index_song = 0
-    music_dir = paths.music_location
-    # "/data/data/com.termux/files/home/storage/music" "C:/Nekran/Music"
-    music_exts = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
-    info_file = "info_music.json"
-    _json_file_is_actual = True
-    """okresla czy plik json jest aktualny wzgledem listy z muzyka"""
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.current_track = None
-            cls.read_dir_library()
-            cls.do_library()
-        return cls._instance
-        
-    @classmethod
-    def _find_music_files(cls):
-        """zapisuje do pliku json wszystkie nowe pliki audio"""
-        _new_file_exist = False
-        for root, dirs, files in os.walk(cls.music_dir):
-            for file in files:
-                ext = os.path.splitext(file)[1].lower()
-                if ext in cls.music_exts:
-                    full_path = os.path.join(root, file)
-                    rel_path = os.path.relpath(full_path, cls.music_dir).replace("\\", "/")
-                    if rel_path not in cls.full_library:
-                        _new_file_exist = True
-                        cls.full_library[rel_path] = []
-        if _new_file_exist:
-            cls._create_info_file()
-        
-
-    @classmethod
-    def _create_info_file(cls):
-        """tworzy plik json, 
-        zapisuje slownik z muzyka do pliku json"""
-        with open(cls.info_file, "w", encoding="utf-8") as f:
-            json.dump(cls.full_library, f, ensure_ascii=False, indent=4)
-            print(f"Zapisano {len(cls.full_library)} plików muzycznych do '{cls.info_file}'")
-        cls._json_file_is_actual = True
-        
-        
-    @classmethod
-    def read_dir_library(cls):
-        """Odczytuje plik JSON z informacjami o utworach i nadpisuje słownik."""
-        if os.path.exists(cls.info_file):
-            with open(cls.info_file, "r", encoding="utf-8") as f:
-                cls.full_library = json.load(f)
-        else:
-            cls.full_library = {}
-            cls._create_info_file()
-        cls._json_file_is_actual = True
-    @classmethod
-    def change_music_tags(cls, name_audio, tag, add = True):
-        """dodaje/usuwa tag do utworu, nie dodaje duplikatow"""
-        if name_audio in cls.full_library:
-            if tag not in cls.full_library[name_audio] and add:
-                cls.full_library[name_audio].append(tag)
-            elif tag in cls.full_library[name_audio] and not add:
-                cls.full_library[name_audio].remove(tag)
-        cls._json_file_is_actual = False
-                
-    @classmethod
-    def do_library(cls):
-        """tworzy liste piosenek, ktore beda odtwarzane"""
-        cls.library = []
-        for song, tags in cls.full_library.items():
-            if not cls.tags or any(tag in cls.tags for tag in tags):
-                cls.library.append(song)
-        cls.current_index_song = 0
-    @classmethod
-    def do_random(cls, yes = True):
-        """ustawia randomowa kolejnosc w bibliotece"""
-        if yes:
-            random.shuffle(cls.library)
-            cls.current_index_song = 0
-        else:
-            cls.do_library()
-            
-    @classmethod
-    def next(cls):
-        cls.current_index_song +=1
-        if cls.current_index_song > len(cls.library):
-            cls.current_index_song = 0
-        path = cls.library[cls.current_index_song]
-        return os.path.join(cls.music_dir, path)
-    
-    @classmethod
-    def before(cls):
-        cls.current_index_song -=1
-        if cls.current_index_song == -1:
-            cls.current_index_song = len(cls.library) -1
-        path = cls.library[cls.current_index_song]
-        return os.path.join(cls.music_dir, path)
 
 class PlayerCtrl():
     global LibMPVPlayer, MusicLibrary
@@ -204,6 +97,7 @@ def after_request(response):
 
 @app.route('/click', methods=['GET', 'POST'])
 def click():
+    is_rnd = False
     print("=== /click endpoint called ===")
     
     try:
@@ -235,6 +129,13 @@ def click():
             volume = data.get('volume', 50)
             print(f"🔊 VOLUME change: {volume}%")
             LibMPVPlayer.set_volume(volume)
+            notify_volume(volume)
+        
+        elif button_id == "rnd":
+            is_rnd = not is_rnd
+            print(f"Zmiana trybu randomowosci")
+            MusicLibrary.do_random(is_rnd)
+            song_update_queue(is_rnd)
             
         else:
             print(f"❌ Unknown button: {button_id}")
@@ -247,6 +148,20 @@ def click():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+        
+def notify_current_song(song_path):
+    """wysyla informacje o aktualnej piosence"""
+    song_name = os.path.basename(song_path)
+    song_update_queue.put({"type": "song", "value": song_name})
+
+def notify_volume(volume):
+    """wysyla informacje o glosnosci"""
+    song_update_queue.put({"type": "volume", "value": volume})
+
+def notify_rnd_flag(is_rnd):
+    """wysyla informacje, czy playlista jest ustawiona randomowo"""
+    song_update_queue.put({"type": "random", "value": is_rnd})
+
 @app.route("/stream")
 def stream():
     def event_stream():
@@ -266,10 +181,10 @@ def test_post():
 
 def run_flask_server():
     """Uruchamia serwer Flask w osobnym wątku"""
-    print("Starting Flask server on http://0.0.0.0:8000")
     try:
         app.run(host="0.0.0.0", port=8000, debug=True, use_reloader=False, threaded=True)
     except Exception as e:
+        logging.warning(f"Blad uruchomienia serwera")
         print(f"Flask server error: {e}")
         import traceback
         traceback.print_exc()
@@ -293,19 +208,19 @@ if __name__ == "__main__":
 
         if music_lib.library:
             first_song_path = os.path.join(music_lib.music_dir, music_lib.library[0])
-            print(f"Playing first song: {first_song_path}")
+            print(f"Piosenka : {first_song_path}")
             LibMPVPlayer.play(first_song_path)
     else:
         logging.warning("Player nie został zainicjowany")
         print("player nie został zainicjowany")
     
-    print("Starting Flask server...")
+    print("Start serwera")
     flask_thread = threading.Thread(target=run_flask_server)
     flask_thread.daemon = True
     flask_thread.start()
     
     time.sleep(3)
-    print("Server should be ready now at http://127.0.0.1:8000")
+    print("Serwer dziala http://127.0.0.1:8000")
     
     while True:
         time.sleep(1)
