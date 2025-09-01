@@ -1,15 +1,62 @@
 
-const API_URL = "{{ api_url }}";
+const API_URL = document.body.dataset.apiUrl;
+console.log("🔄 Script loaded");
+console.log("📋 API_URL from data attribute:", document.body.dataset.apiUrl);
+console.log("📋 Full API URL:", API_URL);
+
+// Pobierz dane z data-atrybutu
+const initialState = JSON.parse(document.body.dataset.initialState);
+console.log("📦 Dane początkowe:", initialState);
+
 
 const logEl = document.getElementById("log");
 const buttons = document.querySelectorAll("button[data-button]");
 
 const volumeSlider = document.getElementById('volumeSlider');
 const volumeValue = document.getElementById('volumeValue');
-const randomSong = document.getElementById('randomSong');
-const currentSongEl = document.getElementById("currentSong");
+const rndButton = document.getElementById('rndBtn');
+const currentSongEl = document.getElementById("currentSong"); 
 
 let volumeChangeTimeout = null;
+
+// Uaktualnij UI
+currentSongEl.textContent = initialState.currentSong || "Brak";
+volumeSlider.value = initialState.volume;
+volumeValue.textContent = initialState.volume;
+updateRandomButton(initialState.isRandom);
+
+// Funkcja do aktualizacji wyglądu przycisku random
+function updateRandomButton(isRandom) {
+    const rndButton = document.getElementById('rndBtn');
+    if (!rndButton) {
+        console.error("❌ Przycisk random nie znaleziony!");
+        return;
+    }
+    
+    // Aktualizuj wygląd przycisku
+    if (isRandom) {
+        // Tryb random ON - zielony
+        rndButton.textContent = "✅ Random ON";
+        rndButton.style.backgroundColor = "green";
+        rndButton.style.color = "white";
+        rndButton.title = "Tryb random włączony";
+    } else {
+        // Tryb random OFF - czerwony
+        rndButton.textContent = "❌ Random OFF";
+        rndButton.style.backgroundColor = "red";
+        rndButton.style.color = "white";
+        rndButton.title = "Tryb random wyłączony";
+    }
+    
+    // Zapisz stan w data-atrybucie (opcjonalnie)
+    rndButton.dataset.randomState = isRandom;
+    
+    console.log(`🎯 Przycisk random ustawiony na: ${isRandom ? 'ON' : 'OFF'}`);
+}
+
+// Przykład użycia:
+// updateRandomButton(true);  // Zielony przycisk "✅ Random ON"
+// updateRandomButton(false); // Czerwony przycisk "❌ Random OFF"
 
 function setBusy(busy) {
   buttons.forEach(b => b.disabled = busy);
@@ -37,13 +84,20 @@ evtSource.onmessage = (event) => {
 	  log("Nowa głośność: " + data.value + "%", "ok");
   }
   if (data.type === "random") {
-	  randomSong.value = data.value;
-	  log("ustawiono: " + data.value, "ok");
-  }
+      if (rndButton) {
+        rndButton.textContent = data.value ? "Random ON" : "Random OFF";
+        rndButton.style.backgroundColor = data.value ? "green" : "red";
+        log("ustawiono random: " + data.value, "ok");
+      }
+    }
 };
 
 evtSource.onerror = (err) => {
   log("Błąd połączenia z /stream: " + err, "err");
+  // Próba ponownego połączenia po 3 sekundach
+  setTimeout(() => {
+    location.reload();
+  }, 3000);
 };
 
 // Obsługa zmiany głośności
@@ -86,6 +140,7 @@ async function sendCommand(buttonId) {
   setBusy(true);
   try {
 	  console.log("🔄 Sending request to:", API_URL);
+      console.log("📦 Sending data:", { button: buttonId });
 	  
 	  const res = await fetch(API_URL, {
 		  method: "POST",

@@ -10,7 +10,7 @@ try:
     libmpv = ctypes.CDLL(paths.libmpv_path_termux)
 except Exception as e:
     try:
-        libmpv = ctypes.CDLL(libmpv_path)
+        libmpv = ctypes.CDLL(paths.libmpv_path_local)
     except Exception as e:
         logging.error(f"Nie udało się załadować libmpv: {e}")
         libmpv = None

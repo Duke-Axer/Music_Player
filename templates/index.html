@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sterowanie odtwarzaczem</title>
 </head>
-<body>
+<body data-api-url="{{ api_url }}" data-initial-state="{{ initial_state }}">
 <div class="card">
   <h1>Sterowanie odtwarzaczem (HTTP JSON)</h1>
   <p class="hint">Kliknij przycisk – strona wyśle <code>{"button": "..."}</code> metodą POST do endpointu API.</p>

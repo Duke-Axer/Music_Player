@@ -5,7 +5,7 @@ import json
 import random
 import logging
 import time
-from flask import Flask, render_template,request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response
 from flask_cors import CORS
 from queue import Queue
 
@@ -25,7 +25,19 @@ app = Flask(__name__)
 CORS(app)
 @app.route("/")
 def index():
-    return render_template("index.html", api_url= server.get_address())
+    initial_state = {
+        "currentSong": "" if MusicLibrary.library == [] else MusicLibrary.library[MusicLibrary.current_index_song],
+        "volume": MusicLibrary.volume,
+        "isRandom": MusicLibrary.is_rnd_flag
+    }
+    api_url = server.get_address()  # np: "http://192.168.0.106:8000"
+    # api_url = f"{api_url}/click"
+    logging.info(f"adres api: " + api_url)
+    return render_template(
+        "index.html", 
+        api_url=server.get_address(),
+        initial_state=json.dumps(initial_state)  # Dane jako JSON string
+    )
 
 
 # Konfiguracja loggera
@@ -79,25 +91,38 @@ class PlayerCtrl():
             notify_current_song(os.path.join(MusicLibrary.music_dir, 
             MusicLibrary.library[MusicLibrary.current_index_song]))
 
-@app.before_request
-def handle_options():
-    if request.method == "OPTIONS":
-        response = jsonify({"status": "ok"})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        return response
+# @app.before_request
+# def handle_options():
+#     if request.method == "OPTIONS":
+#         response = jsonify({"status": "ok"})
+#         response.headers.add('Access-Control-Allow-Origin', '*')
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+#         response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+#         return response
 
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
+# @app.after_request
+# def after_request(response):
+#     response.headers.add('Access-Control-Allow-Origin', '*')
+#     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+#     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+#     return response
+
+def notify_current_song(song_path):
+    """wysyla informacje o aktualnej piosence"""
+    song_name = os.path.basename(song_path)
+    song_update_queue.put({"type": "song", "value": song_name})
+
+def notify_volume(volume):
+    """wysyla informacje o glosnosci"""
+    MusicLibrary.volume = volume
+    song_update_queue.put({"type": "volume", "value": volume})
+
+def notify_rnd_flag(is_rnd):
+    """wysyla informacje, czy playlista jest ustawiona randomowo"""
+    song_update_queue.put({"type": "random", "value": is_rnd})
 
 @app.route('/click', methods=['GET', 'POST'])
 def click():
-    is_rnd = False
     print("=== /click endpoint called ===")
     
     try:
@@ -131,11 +156,11 @@ def click():
             LibMPVPlayer.set_volume(volume)
             notify_volume(volume)
         
-        elif button_id == "rnd":
-            is_rnd = not is_rnd
+        elif button_id == "random":
+            MusicLibrary.is_rnd_flag = not MusicLibrary.is_rnd_flag
             print(f"Zmiana trybu randomowosci")
-            MusicLibrary.do_random(is_rnd)
-            song_update_queue(is_rnd)
+            MusicLibrary.do_random(MusicLibrary.is_rnd_flag)
+            notify_rnd_flag(MusicLibrary.is_rnd_flag)
             
         else:
             print(f"❌ Unknown button: {button_id}")
@@ -149,25 +174,15 @@ def click():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
         
-def notify_current_song(song_path):
-    """wysyla informacje o aktualnej piosence"""
-    song_name = os.path.basename(song_path)
-    song_update_queue.put({"type": "song", "value": song_name})
-
-def notify_volume(volume):
-    """wysyla informacje o glosnosci"""
-    song_update_queue.put({"type": "volume", "value": volume})
-
-def notify_rnd_flag(is_rnd):
-    """wysyla informacje, czy playlista jest ustawiona randomowo"""
-    song_update_queue.put({"type": "random", "value": is_rnd})
 
 @app.route("/stream")
 def stream():
     def event_stream():
         while True:
-            song_name = song_update_queue.get()  # czeka na nową wiadomość
-            yield f"data: {song_name}\n\n"
+            data = song_update_queue.get()
+            logging.debug(f"wyslano: " + str(data))
+            json_data = json.dumps(data)
+            yield f"data: {json_data}\n\n"
     return Response(event_stream(), mimetype="text/event-stream")
 
 @app.route('/test')

@@ -11,7 +11,7 @@ class paths():
 
 class server():
 	port = 8000
-	address = "192.168.0.106"
+	address = "192.168.0.104"
 	@classmethod
 	def get_address(cls):
 		return "http://" + cls.address + ":" + str(cls.port) + "/click"

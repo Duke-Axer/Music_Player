@@ -20,6 +20,10 @@ class MusicLibrary():
     _json_file_is_actual = True
     """okresla czy plik json jest aktualny wzgledem listy z muzyka"""
     _instance = None
+    is_rnd_flag = False
+    """Okresla czy piosenki sa ulozone randomowo"""
+    volume = 50
+    """Ustawiona glosnosc"""
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -87,6 +91,7 @@ class MusicLibrary():
     @classmethod
     def do_random(cls, yes = True):
         """ustawia randomowa kolejnosc w bibliotece"""
+        MusicLibrary.is_rnd_flag = yes
         if yes:
             random.shuffle(cls.library)
             cls.current_index_song = 0
