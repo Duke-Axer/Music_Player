@@ -4,6 +4,8 @@ import os
 import json
 import random
 
+from scripts/settings.py import paths
+
 class MusicLibrary():
     tags = [] 
     """Tagi piosenek które będą w biblitece, brak oznacza, że wszystkie będą dodane"""
