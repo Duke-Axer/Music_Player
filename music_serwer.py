@@ -87,13 +87,14 @@ class PlayerCtrl():
         notify_current_song(path)
     @classmethod
     def play(cls):
-        LibMPVPlayer.play()
+        path = MusicLibrary.play()
+        LibMPVPlayer.next(path)
         if MusicLibrary.library:
             notify_current_song(os.path.join(MusicLibrary.music_dir, 
             MusicLibrary.library[MusicLibrary.current_index_song]))
             notify_update_library()
 
-LibMPVPlayer.on_song_end = PlayerCtrl.next
+LibMPVPlayer.on_song_end = PlayerCtrl.next # przypisanie callbacka
 
 def notify_current_song(song_path):
     """wysyla informacje o aktualnej piosence"""
@@ -206,6 +207,8 @@ def get_album():
 def wybrana_piosenka():
     data = request.json
     print("Wybrano piosenkę:", data)
+    MusicLibrary.get_index_song(data.get("song_name", ""))
+    PlayerCtrl.play()
     return jsonify({"status": "ok", "received": data})
 
 

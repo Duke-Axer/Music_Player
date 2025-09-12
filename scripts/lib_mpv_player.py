@@ -111,6 +111,7 @@ class LibMPVPlayer:
                     if event.event_id == MPV_EVENT_END_FILE:
                         # Koniec odtwarzania pliku
                         logging.info("Koniec pliku")
+                        print("Koniec pliku")
                         if cls.on_song_end:
                             cls.on_song_end()
             except Exception as e:

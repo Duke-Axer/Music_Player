@@ -116,4 +116,19 @@ class MusicLibrary():
             cls.current_index_song = len(cls.library) -1
         path = cls.library[cls.current_index_song]
         return os.path.join(cls.music_dir, path)
+
+    @classmethod
+    def play(cls, index: int = None):
+        """ustawia aktualna piosenke na podany index"""
+        if index is not None:
+            cls.current_index_song = index
+        path = cls.library[cls.current_index_song]
+        return os.path.join(cls.music_dir, path)
         
+    @classmethod
+    def get_index_song(cls, song_name: str):
+        """zwraca numer piosenki w bibliotece"""
+        if song_name in cls.library:
+            cls.current_index_song = cls.library.index(song_name)
+        else:
+            cls.current_index_song = 0
