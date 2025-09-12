@@ -77,21 +77,14 @@ function renderSongList(songs, containerId = "songList") {
         li.dataset.index = index;
         li.dataset.title = song;
 
+        // Klikni?cie wysy?a wybran? piosenk? na serwer
+        li.addEventListener("click", () => {
+            sendSelectedSong(li.dataset.title, li.dataset.index);
+        });
+
         songListEl.appendChild(li);
     });
 }
-
-function sendSelectedSong(song, index) {
-    fetch("/wybrana-piosenka", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: song, index: index })
-    })
-    .then(res => res.json())
-    .then(resp => console.log("dostarczono", resp.status))
-    .catch(err => console.error("B??d przy wysy?aniu", err));
-}
-
 
 
 
@@ -116,11 +109,6 @@ evtSource.onmessage = (event) => {
         rndButton.style.backgroundColor = data.value ? "green" : "red";
         log("ustawiono random: " + data.value, "ok");
       }
-    }
-  if (data.type === "song_click") {
-        const { title, index } = data.value;
-        sendSelectedSong(title, index);
-        log("Kliknięto piosenkę: " + title, "ok");
     }
 
 };
@@ -232,22 +220,11 @@ async function sendCommand(buttonId) {
 // Funkcja do pobierania informacji o albumie
 async function fetchAlbum() {
     try {
-        const res = await fetch("/album", { method: "GET" });
+        const res = await fetch("/album");
         if (!res.ok) throw new Error(res.status);
 
         const data = await res.json(); // ["aaa", "bbb", "ccc"]
-
-        // Aktualizacja listy w HTML
-        renderSongList(data);
-
-        // Dodanie klikni?cia do ka?dego elementu
-        const songListEl = document.getElementById("songList");
-        songListEl.querySelectorAll("li").forEach(li => {
-            li.addEventListener("click", () => {
-                sendSelectedSong(li.dataset.title, li.dataset.index);
-            });
-        });
-
+        renderSongList(data);           // Tworzy list? i przypisuje klikni?cia
         log("Pobrano informacje o albumie", "ok");
 
     } catch (e) {
@@ -255,6 +232,55 @@ async function fetchAlbum() {
         log(`B??d pobrania albumu: ${e.message}`, "err");
     }
 }
+
+
+
+
+
+// Obsługa kliknięć
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => sendCommand(btn.dataset.button));
+});
+
+// skróty klawiaturowe: B=before, S=stop, N=next
+window.addEventListener("keydown", (e) => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === "b") sendCommand("before");
+  if (k === "s") sendCommand("stop");
+  if (k === "n") sendCommand("next");
+});
+
+// skrót klawiaturowy dla głośności
+window.addEventListener('keydown', (e) => {
+	if (e.repeat) return;
+	const k = e.key.toLowerCase();
+	if (k === "arrowup") {
+	
+
+
+
+
+// Obsługa kliknięć
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => sendCommand(btn.dataset.button));
+});
+
+// skróty klawiaturowe: B=before, S=stop, N=next
+window.addEventListener("keydown", (e) => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (k === "b") sendCommand("before");
+  if (k === "s") sendCommand("stop");
+  if (k === "n") sendCommand("next");
+});
+
+// skrót klawiaturowy dla głośności
+window.addEventListener('keydown', (e) => {
+	if (e.repeat) return;
+	const k = e.key.toLowerCase();
+	if (k === "arrowup") {
+	
 
 
 
