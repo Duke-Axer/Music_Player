@@ -54,9 +54,6 @@ function updateRandomButton(isRandom) {
     console.log(`🎯 Przycisk random ustawiony na: ${isRandom ? 'ON' : 'OFF'}`);
 }
 
-// Przykład użycia:
-// updateRandomButton(true);  // Zielony przycisk "✅ Random ON"
-// updateRandomButton(false); // Czerwony przycisk "❌ Random OFF"
 
 function setBusy(busy) {
   buttons.forEach(b => b.disabled = busy);
@@ -139,8 +136,7 @@ async function changeVolume(volume) {
 async function sendCommand(buttonId) {
   setBusy(true);
   try {
-	  console.log("🔄 Sending request to:", API_URL);
-      console.log("📦 Sending data:", { button: buttonId });
+      console.log("Sending data:", { button: buttonId });
 	  
 	  const res = await fetch(API_URL, {
 		  method: "POST",
@@ -176,6 +172,53 @@ async function sendCommand(buttonId) {
   }
 }
 
+// Funkcja do pobierania informacji o albumie
+async function fetchAlbum() {
+    try {
+        const res = await fetch("/album", { method: "GET" });
+        if (!res.ok) {
+            log(`blad pobrania albumu: ${res.status}`, "err");
+            return;
+        }
+        const data = await res.json();  // ["aaa", "bbb", "ccc"]
+        console.log("Otrzymano dane albumu:", data);
+
+        // Wy?wietlenie listy piosenek
+        const songListEl = document.getElementById("songList");
+        songListEl.innerHTML = "";
+
+        data.forEach((song, index) => {
+            const li = document.createElement("li");
+            li.textContent = song;
+            li.style.cursor = "pointer";
+
+            // Obsluga klikniecia w piosenk
+            li.addEventListener("click", () => {
+                console.log("Wybrano:", song);
+
+                // informacja do serwera o wybranej piosence
+                fetch("/wybrana-piosenka", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: song, index: index })
+                })
+                .then(res => res.json())
+                .then(resp => console.log("dostarczono", resp.status))
+                .catch(err => console.error("blad przy wysylaniu", err));
+            });
+
+            songListEl.appendChild(li);
+        });
+
+        log("Pobrano informacje o albumie", "ok");
+    } catch (e) {
+        console.error("Fetch /album error:", e);
+        log(`Błąd pobrania albumu: ${e.message}`, "err");
+    }
+}
+
+
+
 // Obsługa kliknięć
 buttons.forEach(btn => {
   btn.addEventListener("click", () => sendCommand(btn.dataset.button));
@@ -205,3 +248,5 @@ window.addEventListener('keydown', (e) => {
 		changeVolume(parseInt(volumeSlider.value));
 	}
 });
+// Wywo?ujemy przy starcie
+fetchAlbum();

@@ -91,21 +91,6 @@ class PlayerCtrl():
             notify_current_song(os.path.join(MusicLibrary.music_dir, 
             MusicLibrary.library[MusicLibrary.current_index_song]))
 
-# @app.before_request
-# def handle_options():
-#     if request.method == "OPTIONS":
-#         response = jsonify({"status": "ok"})
-#         response.headers.add('Access-Control-Allow-Origin', '*')
-#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-#         response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-#         return response
-
-# @app.after_request
-# def after_request(response):
-#     response.headers.add('Access-Control-Allow-Origin', '*')
-#     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-#     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-#     return response
 
 def notify_current_song(song_path):
     """wysyla informacje o aktualnej piosence"""
@@ -188,6 +173,20 @@ def stream():
 @app.route('/test')
 def test_endpoint():
     return jsonify({"status": "ok", "message": "Server is working!"})
+
+@app.route('/album', methods=['GET'])
+def get_album():
+    # album_data = music_lib.library
+    album_data = ["aaa", "bbb", "ccc"]
+    print(album_data)
+    return jsonify(album_data)
+
+@app.route('/wybrana-piosenka', methods=['POST'])
+def wybrana_piosenka():
+    data = request.json
+    print("Wybrano piosenkę:", data)
+    return jsonify({"status": "ok", "received": data})
+
 
 @app.route('/test-post', methods=['POST'])
 def test_post():
