@@ -1,6 +1,13 @@
 """Zapisane sciezki itp"""
 
 import os
+import socket
+
+class classproperty(property):
+	def __get__(self, obj, cls):
+		return self.fget(cls)
+
+
 
 class paths():
 	libmpv_path_raspberry = "/lib/arm-linux-gnueabihf/libmpv.so"
@@ -11,7 +18,19 @@ class paths():
 
 class server():
 	port = 8000
-	address = "192.168.0.104"
+	_address = None # "192.168.0.106"
 	@classmethod
 	def get_address(cls):
 		return "http://" + cls.address + ":" + str(cls.port) + "/click"
+	
+
+	@classproperty
+	def address(cls):
+		if cls._address is None:
+			s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+			try:
+				s.connect(("8.8.8.8", 80))
+				cls._address = s.getsockname()[0]
+			finally:
+				s.close()
+		return cls._address

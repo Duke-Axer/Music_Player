@@ -234,7 +234,7 @@ if __name__ == "__main__":
     flask_thread.start()
     
     time.sleep(3)
-    print("Serwer dziala http://127.0.0.1:8000")
+    print("Serwer dziala: " + server.address)
     
     while True:
         time.sleep(1)
