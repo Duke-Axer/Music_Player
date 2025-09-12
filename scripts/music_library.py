@@ -128,6 +128,7 @@ class MusicLibrary():
     @classmethod
     def get_index_song(cls, song_name: str):
         """zwraca numer piosenki w bibliotece"""
+        print(song_name)
         if song_name in cls.library:
             cls.current_index_song = cls.library.index(song_name)
         else:
