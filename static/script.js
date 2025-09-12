@@ -64,29 +64,6 @@ function log(msg, cls = "") {
   logEl.innerHTML = `<span class="${cls}">${new Date().toLocaleTimeString()} — ${msg}</span>\n` + logEl.innerHTML;
 }
 
-function renderSongList(songs, containerId = "songList") {
-    const songListEl = document.getElementById(containerId);
-    songListEl.innerHTML = "";
-
-    songs.forEach((song, index) => {
-        const li = document.createElement("li");
-        li.textContent = song;
-        li.style.cursor = "pointer";
-
-        // Przechowujemy dane w data-*
-        li.dataset.index = index;
-        li.dataset.title = song;
-
-        // Klikni?cie wysy?a wybran? piosenk? na serwer
-        li.addEventListener("click", () => {
-            sendSelectedSong(li.dataset.title, li.dataset.index);
-        });
-
-        songListEl.appendChild(li);
-    });
-}
-
-
 
 const evtSource = new EventSource("/stream");
 evtSource.onmessage = (event) => {
@@ -110,6 +87,23 @@ evtSource.onmessage = (event) => {
         log("ustawiono random: " + data.value, "ok");
       }
     }
+  if (data.type === "library_update") {
+    const songListEl = document.getElementById("songList");
+    songListEl.innerHTML = "";
+
+    data.value.forEach((song, index) => {
+        const li = document.createElement("li");
+        li.textContent = song;
+        li.style.cursor = "pointer";
+
+        // klikniecie w piosenkę - wysłanie do serwera
+        li.addEventListener("click", () => sendSelectedSong(song, index));
+
+        songListEl.appendChild(li);
+    });
+
+    log("Pobrano informacje o albumie", "ok");
+}
 
 };
 
@@ -220,68 +214,47 @@ async function sendCommand(buttonId) {
 // Funkcja do pobierania informacji o albumie
 async function fetchAlbum() {
     try {
-        const res = await fetch("/album");
-        if (!res.ok) throw new Error(res.status);
+        const res = await fetch("/album", { method: "GET" });
+        if (!res.ok) {
+            log(`blad pobrania albumu: ${res.status}`, "err");
+            return;
+        }
+        const data = await res.json();  // ["aaa", "bbb", "ccc"]
+        console.log("Otrzymano dane albumu:", data);
 
-        const data = await res.json(); // ["aaa", "bbb", "ccc"]
-        renderSongList(data);           // Tworzy list? i przypisuje klikni?cia
+        // Wy?wietlenie listy piosenek
+        const songListEl = document.getElementById("songList");
+        songListEl.innerHTML = "";
+
+        data.forEach((song, index) => {
+            const li = document.createElement("li");
+            li.textContent = song;
+            li.style.cursor = "pointer";
+
+            // Obsluga klikniecia w piosenk
+            li.addEventListener("click", () => {
+                console.log("Wybrano:", song);
+
+                // informacja do serwera o wybranej piosence
+                fetch("/wybrana-piosenka", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: song, index: index })
+                })
+                .then(res => res.json())
+                .then(resp => console.log("dostarczono", resp.status))
+                .catch(err => console.error("blad przy wysylaniu", err));
+            });
+
+            songListEl.appendChild(li);
+        });
+
         log("Pobrano informacje o albumie", "ok");
-
     } catch (e) {
         console.error("Fetch /album error:", e);
-        log(`B??d pobrania albumu: ${e.message}`, "err");
+        log(`Błąd pobrania albumu: ${e.message}`, "err");
     }
 }
-
-
-
-
-
-// Obsługa kliknięć
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => sendCommand(btn.dataset.button));
-});
-
-// skróty klawiaturowe: B=before, S=stop, N=next
-window.addEventListener("keydown", (e) => {
-  if (e.repeat) return;
-  const k = e.key.toLowerCase();
-  if (k === "b") sendCommand("before");
-  if (k === "s") sendCommand("stop");
-  if (k === "n") sendCommand("next");
-});
-
-// skrót klawiaturowy dla głośności
-window.addEventListener('keydown', (e) => {
-	if (e.repeat) return;
-	const k = e.key.toLowerCase();
-	if (k === "arrowup") {
-	
-
-
-
-
-// Obsługa kliknięć
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => sendCommand(btn.dataset.button));
-});
-
-// skróty klawiaturowe: B=before, S=stop, N=next
-window.addEventListener("keydown", (e) => {
-  if (e.repeat) return;
-  const k = e.key.toLowerCase();
-  if (k === "b") sendCommand("before");
-  if (k === "s") sendCommand("stop");
-  if (k === "n") sendCommand("next");
-});
-
-// skrót klawiaturowy dla głośności
-window.addEventListener('keydown', (e) => {
-	if (e.repeat) return;
-	const k = e.key.toLowerCase();
-	if (k === "arrowup") {
-	
-
 
 
 
