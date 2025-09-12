@@ -177,7 +177,9 @@ def test_endpoint():
 @app.route('/album', methods=['GET'])
 def get_album():
     # album_data = music_lib.library
-    album_data = ["aaa", "bbb", "ccc"]
+    album_data = MusicLibrary.library
+    if album_data == []:
+        album_data = ["aaa", "bbb", "ccc"]
     print(album_data)
     return jsonify(album_data)
 
@@ -234,7 +236,7 @@ if __name__ == "__main__":
     flask_thread.start()
     
     time.sleep(3)
-    print("Serwer dziala: " + server.address)
+    print("Serwer dziala: http://" + server.address+":8000")
     
     while True:
         time.sleep(1)
