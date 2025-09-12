@@ -2,8 +2,6 @@
 import os
 import ctypes
 import logging
-
-from music_serwer import PlayerCtrl
 logger = logging.getLogger(__name__)
 
 from scripts.settings import paths
@@ -113,7 +111,8 @@ class LibMPVPlayer:
                     if event.event_id == MPV_EVENT_END_FILE:
                         # Koniec odtwarzania pliku
                         logging.info("Koniec pliku")
-                        PlayerCtrl.next()
+                        if cls.on_song_end:
+                            cls.on_song_end()
             except Exception as e:
                 logging.error(f"Błąd w pętli zdarzeń: {e}")
                 break

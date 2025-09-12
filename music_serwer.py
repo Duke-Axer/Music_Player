@@ -93,6 +93,8 @@ class PlayerCtrl():
             MusicLibrary.library[MusicLibrary.current_index_song]))
             notify_update_library()
 
+LibMPVPlayer.on_song_end = PlayerCtrl.next
+
 def notify_current_song(song_path):
     """wysyla informacje o aktualnej piosence"""
     song_name = os.path.basename(song_path)
