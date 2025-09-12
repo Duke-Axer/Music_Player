@@ -64,6 +64,36 @@ function log(msg, cls = "") {
   logEl.innerHTML = `<span class="${cls}">${new Date().toLocaleTimeString()} — ${msg}</span>\n` + logEl.innerHTML;
 }
 
+function renderSongList(songs, containerId = "songList") {
+    const songListEl = document.getElementById(containerId);
+    songListEl.innerHTML = "";
+
+    songs.forEach((song, index) => {
+        const li = document.createElement("li");
+        li.textContent = song;
+        li.style.cursor = "pointer";
+
+        // Przechowujemy dane w data-*
+        li.dataset.index = index;
+        li.dataset.title = song;
+
+        songListEl.appendChild(li);
+    });
+}
+
+function sendSelectedSong(song, index) {
+    fetch("/wybrana-piosenka", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: song, index: index })
+    })
+    .then(res => res.json())
+    .then(resp => console.log("dostarczono", resp.status))
+    .catch(err => console.error("B??d przy wysy?aniu", err));
+}
+
+
+
 
 const evtSource = new EventSource("/stream");
 evtSource.onmessage = (event) => {
@@ -87,23 +117,11 @@ evtSource.onmessage = (event) => {
         log("ustawiono random: " + data.value, "ok");
       }
     }
-  if (data.type === "library_update") {
-    const songListEl = document.getElementById("songList");
-    songListEl.innerHTML = "";
-
-    data.value.forEach((song, index) => {
-        const li = document.createElement("li");
-        li.textContent = song;
-        li.style.cursor = "pointer";
-
-        // klikniecie w piosenkę - wysłanie do serwera
-        li.addEventListener("click", () => sendSelectedSong(song, index));
-
-        songListEl.appendChild(li);
-    });
-
-    log("Pobrano informacje o albumie", "ok");
-}
+  if (data.type === "song_click") {
+        const { title, index } = data.value;
+        sendSelectedSong(title, index);
+        log("Kliknięto piosenkę: " + title, "ok");
+    }
 
 };
 
@@ -215,46 +233,29 @@ async function sendCommand(buttonId) {
 async function fetchAlbum() {
     try {
         const res = await fetch("/album", { method: "GET" });
-        if (!res.ok) {
-            log(`blad pobrania albumu: ${res.status}`, "err");
-            return;
-        }
-        const data = await res.json();  // ["aaa", "bbb", "ccc"]
-        console.log("Otrzymano dane albumu:", data);
+        if (!res.ok) throw new Error(res.status);
 
-        // Wy?wietlenie listy piosenek
+        const data = await res.json(); // ["aaa", "bbb", "ccc"]
+
+        // Aktualizacja listy w HTML
+        renderSongList(data);
+
+        // Dodanie klikni?cia do ka?dego elementu
         const songListEl = document.getElementById("songList");
-        songListEl.innerHTML = "";
-
-        data.forEach((song, index) => {
-            const li = document.createElement("li");
-            li.textContent = song;
-            li.style.cursor = "pointer";
-
-            // Obsluga klikniecia w piosenk
+        songListEl.querySelectorAll("li").forEach(li => {
             li.addEventListener("click", () => {
-                console.log("Wybrano:", song);
-
-                // informacja do serwera o wybranej piosence
-                fetch("/wybrana-piosenka", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ title: song, index: index })
-                })
-                .then(res => res.json())
-                .then(resp => console.log("dostarczono", resp.status))
-                .catch(err => console.error("blad przy wysylaniu", err));
+                sendSelectedSong(li.dataset.title, li.dataset.index);
             });
-
-            songListEl.appendChild(li);
         });
 
         log("Pobrano informacje o albumie", "ok");
+
     } catch (e) {
         console.error("Fetch /album error:", e);
-        log(`Błąd pobrania albumu: ${e.message}`, "err");
+        log(`B??d pobrania albumu: ${e.message}`, "err");
     }
 }
+
 
 
 
