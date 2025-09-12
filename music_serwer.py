@@ -79,6 +79,7 @@ class PlayerCtrl():
         path = MusicLibrary.next()
         LibMPVPlayer.next(path)
         notify_current_song(path)
+        notify_update_library()
     @classmethod
     def before(cls):
         path = MusicLibrary.before()
@@ -90,7 +91,7 @@ class PlayerCtrl():
         if MusicLibrary.library:
             notify_current_song(os.path.join(MusicLibrary.music_dir, 
             MusicLibrary.library[MusicLibrary.current_index_song]))
-
+            notify_update_library()
 
 def notify_current_song(song_path):
     """wysyla informacje o aktualnej piosence"""
@@ -105,6 +106,22 @@ def notify_volume(volume):
 def notify_rnd_flag(is_rnd):
     """wysyla informacje, czy playlista jest ustawiona randomowo"""
     song_update_queue.put({"type": "random", "value": is_rnd})
+
+def notify_update_library():
+    """wysyla aktualny album, jeśli jest nieaktualny"""
+    if MusicLibrary.is_actual_library:
+        return
+    album_data = MusicLibrary.library
+    if album_data == []:
+        album_data = ["aaa", "bbb", "ccc"]
+    print(album_data)
+    song_update_queue.put({
+        "type": "library_update",
+        "value": album_data
+    })
+    MusicLibrary.is_actual_library = True
+
+
 
 @app.route('/click', methods=['GET', 'POST'])
 def click():
@@ -140,6 +157,7 @@ def click():
             print(f"🔊 VOLUME change: {volume}%")
             LibMPVPlayer.set_volume(volume)
             notify_volume(volume)
+            
         
         elif button_id == "random":
             MusicLibrary.is_rnd_flag = not MusicLibrary.is_rnd_flag
@@ -160,7 +178,7 @@ def click():
         return jsonify({"error": str(e)}), 500
         
 
-@app.route("/stream")
+@app.route("/stream", methods=['GET'])
 def stream():
     def event_stream():
         while True:
@@ -170,13 +188,12 @@ def stream():
             yield f"data: {json_data}\n\n"
     return Response(event_stream(), mimetype="text/event-stream")
 
-@app.route('/test')
+@app.route('/test', methods=['GET'])
 def test_endpoint():
     return jsonify({"status": "ok", "message": "Server is working!"})
 
 @app.route('/album', methods=['GET'])
 def get_album():
-    # album_data = music_lib.library
     album_data = MusicLibrary.library
     if album_data == []:
         album_data = ["aaa", "bbb", "ccc"]

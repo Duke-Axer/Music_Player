@@ -24,6 +24,8 @@ class MusicLibrary():
     """Okresla czy piosenki sa ulozone randomowo"""
     volume = 50
     """Ustawiona glosnosc"""
+    is_actual_library = True
+    """Okresla czy biblioteka jest aktualna"""
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -87,22 +89,23 @@ class MusicLibrary():
         for song, tags in cls.full_library.items():
             if not cls.tags or any(tag in cls.tags for tag in tags):
                 cls.library.append(song)
+        if MusicLibrary.is_rnd_flag:
+            random.shuffle(cls.library)
         cls.current_index_song = 0
+        cls.is_actual_library = False
     @classmethod
     def do_random(cls, yes = True):
         """ustawia randomowa kolejnosc w bibliotece"""
         MusicLibrary.is_rnd_flag = yes
-        if yes:
-            random.shuffle(cls.library)
-            cls.current_index_song = 0
-        else:
-            cls.do_library()
+        cls.do_library()
             
     @classmethod
     def next(cls):
         cls.current_index_song +=1
         if cls.current_index_song > len(cls.library):
             cls.current_index_song = 0
+            if MusicLibrary.is_rnd_flag:
+                MusicLibrary.do_random(True)
         path = cls.library[cls.current_index_song]
         return os.path.join(cls.music_dir, path)
     

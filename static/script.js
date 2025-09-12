@@ -87,6 +87,24 @@ evtSource.onmessage = (event) => {
         log("ustawiono random: " + data.value, "ok");
       }
     }
+  if (data.type === "library_update") {
+    const songListEl = document.getElementById("songList");
+    songListEl.innerHTML = "";
+
+    data.value.forEach((song, index) => {
+        const li = document.createElement("li");
+        li.textContent = song;
+        li.style.cursor = "pointer";
+
+        // klikniecie w piosenkę - wysłanie do serwera
+        li.addEventListener("click", () => sendSelectedSong(song, index));
+
+        songListEl.appendChild(li);
+    });
+
+    log("Pobrano informacje o albumie", "ok");
+}
+
 };
 
 evtSource.onerror = (err) => {
@@ -108,6 +126,27 @@ volumeSlider.addEventListener('input', (e) => {
 		changeVolume(volume);
 	}, 300);
 });
+
+// wysyłanie wybranej piosenki
+async function sendSelectedSong(song, index) {
+    try {
+        const res = await fetch("/wybrana-piosenka", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: song, index: index })
+        });
+
+        if (!res.ok) {
+            console.error("Blad serwera:", res.status);
+            return;
+        }
+
+        const resp = await res.json();
+        console.log("Dostarczono:", resp.status);
+    } catch (err) {
+        console.error("blad:", err);
+    }
+}
 
 // Funkcja do wysyłania zmiany głośności
 async function changeVolume(volume) {
