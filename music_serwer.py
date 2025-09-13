@@ -140,24 +140,21 @@ def click():
         button_id = data.get('button')
         
         if button_id == "test":
-            print("✅ TEST button pressed")
+            print("TEST button pressed")
             return jsonify({"status": "success", "message": "Test received in terminal"})
             
         elif button_id == "stop":
-            print("🔄 STOP/RESUME command")
             PlayerCtrl.pause()
             
         elif button_id == "next":
-            print("⏭️ NEXT command")
             PlayerCtrl.next()
             
         elif button_id == "before":
-            print("⏮️ BEFORE command")
             PlayerCtrl.before()
             
         elif button_id == "volume":
             volume = data.get('volume', 50)
-            print(f"🔊 VOLUME change: {volume}%")
+            print(f"Volume change: {volume}%")
             LibMPVPlayer.set_volume(volume)
             notify_volume(volume)
             
@@ -169,13 +166,13 @@ def click():
             notify_rnd_flag(MusicLibrary.is_rnd_flag)
             
         else:
-            print(f"❌ Unknown button: {button_id}")
+            print(f"Unknown button: {button_id}")
             return jsonify({"error": "Unknown button"}), 400
             
         return jsonify({"status": "success", "button": button_id})
         
     except Exception as e:
-        print(f"❌ ERROR in click handler: {e}")
+        print(f"ERROR button: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

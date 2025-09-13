@@ -25,7 +25,12 @@ if libmpv:
     libmpv.mpv_destroy.argtypes = [ctypes.c_void_p]
 
 class mpv_event(ctypes.Structure):
-    _fields_ = [("event_id", ctypes.c_int)]
+    _fields_ = [
+        ("event_id", ctypes.c_int),
+        ("error", ctypes.c_int),
+        ("reply_userdata", ctypes.c_ulonglong),  # w C to uint64_t
+        ("data", ctypes.c_void_p),
+    ]
 
 if libmpv:
     libmpv.mpv_wait_event.argtypes = [ctypes.c_void_p, ctypes.c_double]
