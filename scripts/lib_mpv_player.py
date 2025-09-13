@@ -133,22 +133,20 @@ class LibMPVPlayer:
                     ev_name = libmpv.mpv_event_name(event.event_id).decode()
                     if event.event_id == 0:
                         continue
-                    print(f"EVENT: {event.event_id} ({ev_name})")
                     if event.event_id == MPV_EVENT_END_FILE and cls._event_stop_time():
                         # Koniec odtwarzania pliku
-                        print("Koniec pliku")
-                        if event.data:
-                            # Konwertuj data na strukturę end_file_reason
-                            reason = ctypes.cast(event.data, ctypes.POINTER(ctypes.c_int)).contents.value
-                            print(f"Koniec pliku, przyczyna: {reason}")
-                        if reason == 0:  # MPV_END_FILE_REASON_EOF
-                                logging.info("Koniec pliku (normalne zakończenie)")
-                                if cls.on_song_end:
-                                    cls.on_song_end()
+                        print(f"EVENT: {event.event_id} ({ev_name})")
+                        reason = ctypes.cast(event.data, ctypes.POINTER(ctypes.c_int)).contents.value
+                        if reason == MPV_END_FILE_REASON_EOF:
+                            print("Plik się skończył")
+                        elif reason == MPV_END_FILE_REASON_QUIT or reason == MPV_END_FILE_REASON_STOP:
+                            print("User zmienił utwór")
+                            continue
                         else:
                             logging.info("Koniec pliku (brak danych o przyczynie)")
-                            if cls.on_song_end:
-                                cls.on_song_end()
+                            
+                        if cls.on_song_end:
+                            cls.on_song_end()
             except Exception as e:
                 logging.error(f"Błąd w pętli zdarzeń: {e}")
                 break
