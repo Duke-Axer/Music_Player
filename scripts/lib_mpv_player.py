@@ -127,7 +127,7 @@ class LibMPVPlayer:
                     if event.event_id == 0:
                         continue
                     print(f"EVENT: {event.event_id} ({ev_name})")
-                    if event.event_id == MPV_EVENT_END_FILE:
+                    if event.event_id == MPV_EVENT_END_FILE and not cls._event_handler_busy:
                         # Koniec odtwarzania pliku
                         print("Koniec pliku")
                         if not cls._event_handler_busy:
