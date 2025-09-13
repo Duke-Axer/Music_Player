@@ -7,8 +7,9 @@ logger = logging.getLogger(__name__)
 from scripts.settings import paths
 
 MPV_END_FILE_REASON_EOF = 0  # Normalne zakończenie
-MPV_END_FILE_REASON_STOP = 7  # Zatrzymane przez użytkownika
+MPV_END_FILE_REASON_STOP = 2  # Zatrzymane przez użytkownika
 MPV_END_FILE_REASON_QUIT = 3  # Zakończenie aplikacji
+MPV_EVENT_END_FILE = 7  # Zakończenie pliku
 
 try:
     libmpv = ctypes.CDLL(paths.libmpv_path_termux)
@@ -43,7 +44,6 @@ if libmpv:
     libmpv.mpv_event_name.argtypes = [ctypes.c_int]
     libmpv.mpv_event_name.restype = ctypes.c_char_p
 
-MPV_EVENT_END_FILE = 4  # Zakończenie pliku
 
 class LibMPVPlayer:
     _instance = None
@@ -122,8 +122,9 @@ class LibMPVPlayer:
                 if event_ptr:
                     event = event_ptr.contents
                     ev_name = libmpv.mpv_event_name(event.event_id).decode()
-                    if event.event_id != 0:
-                        print(f"EVENT: {event.event_id} ({ev_name})")
+                    if event.event_id == 0:
+                        continue
+                    print(f"EVENT: {event.event_id} ({ev_name})")
                     if event.event_id == MPV_EVENT_END_FILE:
                         # Koniec odtwarzania pliku
                         print("Koniec pliku")
