@@ -2,6 +2,7 @@
 import os
 import ctypes
 import logging
+import time
 logger = logging.getLogger(__name__)
 
 from scripts.settings import paths
@@ -52,6 +53,7 @@ class LibMPVPlayer:
     running = False
     counter = 0
     on_song_end = None
+    _event_handler_busy = False  # Flaga określa czy piosenka została już zmieniona
     
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -128,6 +130,8 @@ class LibMPVPlayer:
                     if event.event_id == MPV_EVENT_END_FILE:
                         # Koniec odtwarzania pliku
                         print("Koniec pliku")
+                        if not cls._event_handler_busy:
+                            cls._event_handler_busy = True
                         if event.data:
                             # Konwertuj data na strukturę end_file_reason
                             reason = ctypes.cast(event.data, ctypes.POINTER(ctypes.c_int)).contents.value
@@ -140,6 +144,8 @@ class LibMPVPlayer:
                             logging.info("Koniec pliku (brak danych o przyczynie)")
                             if cls.on_song_end:
                                 cls.on_song_end()
+                        time.sleep(0.1)  # Zapobiega szybkiemu ponownemu wywołaniu
+                        cls._event_handler_busy = False
             except Exception as e:
                 logging.error(f"Błąd w pętli zdarzeń: {e}")
                 break
