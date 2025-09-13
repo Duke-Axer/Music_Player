@@ -102,7 +102,7 @@ class MusicLibrary():
     @classmethod
     def next(cls):
         cls.current_index_song +=1
-        if cls.current_index_song > len(cls.library):
+        if cls.current_index_song > len(cls.library) -1:
             cls.current_index_song = 0
             if MusicLibrary.is_rnd_flag:
                 MusicLibrary.do_random(True)
@@ -129,7 +129,7 @@ class MusicLibrary():
     def get_index_song(cls, song_name: str):
         """zwraca numer piosenki w bibliotece"""
         print(song_name)
-        
+
         if song_name in cls.library:
             cls.current_index_song = cls.library.index(song_name)
         else:
