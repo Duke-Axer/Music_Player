@@ -144,6 +144,7 @@ class LibMPVPlayer:
                             logging.info("Koniec pliku (brak danych o przyczynie)")
                             if cls.on_song_end:
                                 cls.on_song_end()
+                        event.event_id = 0
                         time.sleep(0.5)  # Zapobiega szybkiemu ponownemu wywołaniu
                         cls._event_handler_busy = False
             except Exception as e:
