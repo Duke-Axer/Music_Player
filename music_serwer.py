@@ -30,12 +30,11 @@ def index():
         "volume": MusicLibrary.volume,
         "isRandom": MusicLibrary.is_rnd_flag
     }
-    api_url = server.get_address()  # np: "http://192.168.0.106:8000"
-    # api_url = f"{api_url}/click"
+    api_url = server.get_address() + "/click"  # np: "http://192.168.0.106:8000"
     logging.info(f"adres api: " + api_url)
     return render_template(
         "index.html", 
-        api_url=server.get_address(),
+        api_url=server.get_address() + "/click",
         initial_state=json.dumps(initial_state)  # Dane jako JSON string
     )
 
@@ -84,7 +83,7 @@ class PlayerCtrl():
             MusicLibrary.library[MusicLibrary.current_index_song]))
             notify_update_library()
 
-LibMPVPlayer.on_song_end = PlayerCtrl.next # przypisanie callbacka
+# LibMPVPlayer.on_song_end = PlayerCtrl.next # przypisanie callbacka
 
 def notify_current_song(song_path):
     """wysyla informacje o aktualnej piosence"""
@@ -151,7 +150,7 @@ def click():
         
         elif button_id == "random":
             MusicLibrary.is_rnd_flag = not MusicLibrary.is_rnd_flag
-            print(f"Zmiana trybu randomowosci")
+            print("Zmiana trybu randomowosci")
             MusicLibrary.do_random(MusicLibrary.is_rnd_flag)
             notify_rnd_flag(MusicLibrary.is_rnd_flag)
             
@@ -173,7 +172,7 @@ def stream():
     def event_stream():
         while True:
             data = song_update_queue.get()
-            logging.debug(f"wyslano: " + str(data))
+            logging.debug("wyslano: " + str(data))
             json_data = json.dumps(data)
             yield f"data: {json_data}\n\n"
     return Response(event_stream(), mimetype="text/event-stream")
@@ -194,7 +193,7 @@ def get_album():
 def wybrana_piosenka():
     data = request.json
     MusicLibrary.get_index_song(data["title"])
-    print("Wybrano piosenkę: "+data["title"]+" "+str(data["index"])+" "+str(MusicLibrary.current_index_song))
+    print(f"Wybrano piosenkę: {data["title"]} {str(data["index"])} {str(MusicLibrary.current_index_song)}")
     PlayerCtrl.play()
     return jsonify({"status": "ok", "received": data})
 
@@ -209,7 +208,7 @@ def run_flask_server():
     try:
         app.run(host="0.0.0.0", port=8000, debug=True, use_reloader=False, threaded=True)
     except Exception as e:
-        logging.warning(f"Blad uruchomienia serwera")
+        logging.warning("Blad uruchomienia serwera")
         print(f"Flask server error: {e}")
         import traceback
         traceback.print_exc()
@@ -252,7 +251,7 @@ if __name__ == "__main__":
     flask_thread.start()
     
     time.sleep(3)
-    print("Serwer dziala: http://" + server.address+":8000")
+    print(f"Serwer dziala: {server.get_address()}")
     
     while True:
         time.sleep(1)

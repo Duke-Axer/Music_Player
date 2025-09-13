@@ -1,12 +1,12 @@
 
 const API_URL = document.body.dataset.apiUrl;
-console.log("🔄 Script loaded");
-console.log("📋 API_URL from data attribute:", document.body.dataset.apiUrl);
-console.log("📋 Full API URL:", API_URL);
+console.log("Script loaded");
+console.log("API_URL from data attribute:", document.body.dataset.apiUrl);
+console.log("Full API URL:", API_URL);
 
 // Pobierz dane z data-atrybutu
 const initialState = JSON.parse(document.body.dataset.initialState);
-console.log("📦 Dane początkowe:", initialState);
+console.log("Dane początkowe:", initialState);
 
 
 const logEl = document.getElementById("log");
@@ -29,20 +29,20 @@ updateRandomButton(initialState.isRandom);
 function updateRandomButton(isRandom) {
     const rndButton = document.getElementById('rndBtn');
     if (!rndButton) {
-        console.error("❌ Przycisk random nie znaleziony!");
+        console.error("Przycisk random nie znaleziony!");
         return;
     }
     
     // Aktualizuj wygląd przycisku
     if (isRandom) {
         // Tryb random ON - zielony
-        rndButton.textContent = "✅ Random ON";
+        rndButton.textContent = "Random ON";
         rndButton.style.backgroundColor = "green";
         rndButton.style.color = "white";
         rndButton.title = "Tryb random włączony";
     } else {
         // Tryb random OFF - czerwony
-        rndButton.textContent = "❌ Random OFF";
+        rndButton.textContent = "Random OFF";
         rndButton.style.backgroundColor = "red";
         rndButton.style.color = "white";
         rndButton.title = "Tryb random wyłączony";
@@ -51,7 +51,7 @@ function updateRandomButton(isRandom) {
     // Zapisz stan w data-atrybucie (opcjonalnie)
     rndButton.dataset.randomState = isRandom;
     
-    console.log(`🎯 Przycisk random ustawiony na: ${isRandom ? 'ON' : 'OFF'}`);
+    console.log(`Przycisk random ustawiony na: ${isRandom ? 'ON' : 'OFF'}`);
 }
 
 
@@ -165,7 +165,7 @@ async function changeVolume(volume) {
 			log(`Głośność ustawiona na: ${volume}%`, "ok");
 		}
 	} catch (e) {
-		console.error("❌ Volume change error:", e);
+		console.error("Volume change error:", e);
 		log(`Błąd zmiany głośności: ${e.message}`, "err");
 	} finally {
 		setBusy(false);
@@ -184,9 +184,9 @@ async function sendCommand(buttonId) {
 		  signal: AbortSignal.timeout(5000) // 5 sekund timeout
 	  });
 
-	  console.log("✅ Response status:", res.status);
+	  console.log("Response status:", res.status);
 	  const text = await res.text();
-	  console.log("📄 Response text:", text);
+	  console.log("Response text:", text);
 	  
 	  if (!res.ok) {
 		  log(`Błąd ${res.status}: ${text || res.statusText}`, "err");
@@ -199,7 +199,7 @@ async function sendCommand(buttonId) {
 		  }
 	  }
   } catch (e) {
-	  console.error("❌ Fetch error:", e);
+	  console.error("Fetch error:", e);
 	  log(`Błąd połączenia: ${e.message}`, "err");
 	  
 	  // Dodatkowe informacje diagnostyczne

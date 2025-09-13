@@ -21,11 +21,13 @@ class server():
 	_address = None # "192.168.0.106"
 	@classmethod
 	def get_address(cls):
-		return "http://" + cls.address + ":" + str(cls.port) + "/click"
+		"""Zwraca pełny adres z portem"""
+		return "http://" + cls.address + ":" + str(cls.port)
 	
 
 	@classproperty
 	def address(cls):
+		"""Adres np: 192.168.0.106"""
 		if cls._address is None:
 			s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 			try:
