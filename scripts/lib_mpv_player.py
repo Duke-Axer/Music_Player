@@ -36,6 +36,9 @@ if libmpv:
     libmpv.mpv_wait_event.argtypes = [ctypes.c_void_p, ctypes.c_double]
     libmpv.mpv_wait_event.restype = ctypes.POINTER(mpv_event)
 
+    libmpv.mpv_event_name.argtypes = [ctypes.c_int]
+    libmpv.mpv_event_name.restype = ctypes.c_char_p
+
 MPV_EVENT_END_FILE = 4  # Zakończenie pliku
 
 class LibMPVPlayer:
@@ -113,6 +116,8 @@ class LibMPVPlayer:
                 event_ptr = libmpv.mpv_wait_event(cls.player, 0.1)
                 if event_ptr:
                     event = event_ptr.contents
+                    ev_name = libmpv.mpv_event_name(event.event_id).decode()
+                    print(f"EVENT: {event.event_id} ({ev_name})")
                     if event.event_id == MPV_EVENT_END_FILE:
                         # Koniec odtwarzania pliku
                         logging.info("Koniec pliku")

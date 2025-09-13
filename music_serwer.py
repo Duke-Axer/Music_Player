@@ -56,9 +56,15 @@ class LibMPVPlayerThreaded(LibMPVPlayer):
             logging.warning("Player nie jest zainicjalizowany")
             return
             
-        t = threading.Thread(target=cls.play, args=(file_path,))
-        t.daemon = True
-        t.start()
+        # wątek do grania
+        t1 = threading.Thread(target=cls.play, args=(file_path,))
+        t1.daemon = True
+        t1.start()
+
+        # wątek do obsługi eventów
+        t2 = threading.Thread(target=cls._event_loop)
+        t2.daemon = True
+        t2.start()
 
 class PlayerCtrl():
     global LibMPVPlayer, MusicLibrary
