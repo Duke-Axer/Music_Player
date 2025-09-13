@@ -206,7 +206,7 @@ def get_album():
 @app.route('/wybrana-piosenka', methods=['POST'])
 def wybrana_piosenka():
     data = request.json
-    print("Wybrano piosenkę:", data)
+    print("Wybrano piosenkę: "+data["title"]+" "+data["index"])
     print(data.get("song_name", ""))
     MusicLibrary.get_index_song(data.get("song_name", ""))
     PlayerCtrl.play()
