@@ -207,7 +207,7 @@ def get_album():
 def wybrana_piosenka():
     data = request.json
     MusicLibrary.get_index_song(data["title"])
-    print("Wybrano piosenkę: "+data["title"]+" "+str(data["index"])+" "+MusicLibrary.current_index_song)
+    print("Wybrano piosenkę: "+data["title"]+" "+str(data["index"])+" "+str(MusicLibrary.current_index_song))
     PlayerCtrl.play()
     return jsonify({"status": "ok", "received": data})
 
