@@ -6,6 +6,10 @@ logger = logging.getLogger(__name__)
 
 from scripts.settings import paths
 
+MPV_END_FILE_REASON_EOF = 0  # Normalne zakończenie
+MPV_END_FILE_REASON_STOP = 2  # Zatrzymane przez użytkownika
+MPV_END_FILE_REASON_QUIT = 3  # Zakończenie aplikacji
+
 try:
     libmpv = ctypes.CDLL(paths.libmpv_path_termux)
 except Exception as e:
@@ -47,6 +51,7 @@ class LibMPVPlayer:
     player = None 
     running = False
     counter = 0
+    on_song_end = None
     
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -120,10 +125,19 @@ class LibMPVPlayer:
                     print(f"EVENT: {event.event_id} ({ev_name})")
                     if event.event_id == MPV_EVENT_END_FILE:
                         # Koniec odtwarzania pliku
-                        logging.info("Koniec pliku")
                         print("Koniec pliku")
-                        if cls.on_song_end:
-                            cls.on_song_end()
+                        if event.data:
+                            # Konwertuj data na strukturę end_file_reason
+                            reason = ctypes.cast(event.data, ctypes.POINTER(ctypes.c_int)).contents.value
+                            print(f"Koniec pliku, przyczyna: {reason}")
+                        if reason == 0:  # MPV_END_FILE_REASON_EOF
+                                logging.info("Koniec pliku (normalne zakończenie)")
+                                if cls.on_song_end:
+                                    cls.on_song_end()
+                        else:
+                            logging.info("Koniec pliku (brak danych o przyczynie)")
+                            if cls.on_song_end:
+                                cls.on_song_end()
             except Exception as e:
                 logging.error(f"Błąd w pętli zdarzeń: {e}")
                 break

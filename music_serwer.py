@@ -49,23 +49,6 @@ logging.basicConfig(
 )
 
 
-class LibMPVPlayerThreaded(LibMPVPlayer):
-    @classmethod
-    def play_current_threaded(cls, file_path=None):
-        if not cls.player:
-            logging.warning("Player nie jest zainicjalizowany")
-            return
-            
-        # wątek do grania
-        t1 = threading.Thread(target=cls.play, args=(file_path,))
-        t1.daemon = True
-        t1.start()
-
-        # wątek do obsługi eventów
-        t2 = threading.Thread(target=cls._event_loop)
-        t2.daemon = True
-        t2.start()
-
 class PlayerCtrl():
     global LibMPVPlayer, MusicLibrary
     _is_pause = False
@@ -82,6 +65,7 @@ class PlayerCtrl():
             logging.warning("Player not initialized!")
     @classmethod
     def next(cls):
+        print("następna")
         path = MusicLibrary.next()
         LibMPVPlayer.next(path)
         notify_current_song(path)
@@ -238,6 +222,7 @@ if __name__ == "__main__":
     
     if LibMPVPlayer.player:
         print("Player created successfully")
+        LibMPVPlayer.on_song_end = PlayerCtrl.next
         # Odtwórz pierwszą piosenkę jeśli biblioteka ma utwory
         music_lib = MusicLibrary()
         music_lib.read_dir_library()
@@ -251,6 +236,12 @@ if __name__ == "__main__":
             first_song_path = os.path.join(music_lib.music_dir, music_lib.library[0])
             print(f"Piosenka : {first_song_path}")
             LibMPVPlayer.play(first_song_path)
+
+            # wątek pętli zdarzeń
+            event_thread = threading.Thread(target=LibMPVPlayer._event_loop)
+            event_thread.daemon = True
+            event_thread.start()
+            print("Pętla zdarzeń uruchomiona")
     else:
         logging.warning("Player nie został zainicjowany")
         print("player nie został zainicjowany")
