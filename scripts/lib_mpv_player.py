@@ -53,7 +53,7 @@ class LibMPVPlayer:
     running = False
     counter = 0
     on_song_end = None
-    _event_handler_busy = False  # Flaga określa czy piosenka została już zmieniona
+    _time_last_event_stop = time.time()  # Czas ostatniego zatrzymania piosenki
     
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -80,6 +80,13 @@ class LibMPVPlayer:
                 logging.error("Biblioteka libmpv nie jest dostępna")
         
         return cls._instance
+
+    @classmethod
+    def _event_stop_time(cls):
+        print(str(time.time() - cls._time_last_event_stop))
+        if time.time() - cls._time_last_event_stop > 2:
+            cls._time_last_event_stop = time.time()
+            return True
 
     @classmethod
     def _cmd(cls, *args):
@@ -127,11 +134,9 @@ class LibMPVPlayer:
                     if event.event_id == 0:
                         continue
                     print(f"EVENT: {event.event_id} ({ev_name})")
-                    if event.event_id == MPV_EVENT_END_FILE and not cls._event_handler_busy:
+                    if event.event_id == MPV_EVENT_END_FILE and cls._event_stop_time():
                         # Koniec odtwarzania pliku
                         print("Koniec pliku")
-                        if not cls._event_handler_busy:
-                            cls._event_handler_busy = True
                         if event.data:
                             # Konwertuj data na strukturę end_file_reason
                             reason = ctypes.cast(event.data, ctypes.POINTER(ctypes.c_int)).contents.value
@@ -144,9 +149,6 @@ class LibMPVPlayer:
                             logging.info("Koniec pliku (brak danych o przyczynie)")
                             if cls.on_song_end:
                                 cls.on_song_end()
-                        event.event_id = 0
-                        time.sleep(0.5)  # Zapobiega szybkiemu ponownemu wywołaniu
-                        cls._event_handler_busy = False
             except Exception as e:
                 logging.error(f"Błąd w pętli zdarzeń: {e}")
                 break
