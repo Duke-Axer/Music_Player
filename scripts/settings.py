@@ -1,4 +1,4 @@
-"""Zapisane sciezki itp"""
+"""Zapisane sciezki, ustawienia itp"""
 
 import os
 import socket
@@ -7,6 +7,12 @@ class classproperty(property):
 	def __get__(self, obj, cls):
 		return self.fget(cls)
 
+class Player():
+	"""Informacje o podstawowych i aktualnych parametrach playera"""
+	volume = 50
+	"""Ustawiona głośność, default 50"""
+	name_song = ""
+	index_song = 0
 
 
 class paths():

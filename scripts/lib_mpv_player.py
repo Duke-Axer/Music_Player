@@ -5,7 +5,7 @@ import logging
 import time
 logger = logging.getLogger(__name__)
 
-from scripts.settings import paths
+from scripts.settings import paths, Player
 
 MPV_END_FILE_REASON_EOF = 0  # Normalne zakończenie
 MPV_END_FILE_REASON_STOP = 2  # Zatrzymane przez użytkownika
@@ -47,6 +47,7 @@ if libmpv:
 
 
 class LibMPVPlayer:
+    """Obsługuje zewnętrzną bibliotekę libmpv"""
     _instance = None
     _initialized = False
     player = None 
@@ -59,25 +60,26 @@ class LibMPVPlayer:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             
-            # Tworzenie instancji mpv tylko jeśli biblioteka jest dostępna
-            if libmpv:
-                try:
-                    cls.player = libmpv.mpv_create()  
-                    if cls.player:
-                        ret = libmpv.mpv_initialize(cls.player)
-                        if ret < 0:
-                            logging.error(f"Nie udało się zainicjalizować mpv, kod: {ret}")
-                            cls.player = None
-                        else:
-                            cls._initialized = True
-                            logging.info("MPV zainicjalizowany pomyślnie")
-                    else:
-                        logging.error("Nie udało się utworzyć instancji mpv")
-                except Exception as e:
-                    logging.exception("Błąd podczas inicjalizacji mpv: %s", e)
-                    cls.player = None
-            else:
+            if libmpv is None:
                 logging.error("Biblioteka libmpv nie jest dostępna")
+                return cls._instance
+
+            # Tworzenie instancji mpv tylko jeśli biblioteka jest dostępna
+            try:
+                cls.player = libmpv.mpv_create()  
+                if cls.player:
+                    ret = libmpv.mpv_initialize(cls.player)
+                    if ret < 0:
+                        logging.error(f"Nie udało się zainicjalizować mpv, kod: {ret}")
+                        cls.player = None
+                    else:
+                        cls._initialized = True
+                        logging.info("MPV zainicjalizowany pomyślnie")
+                else:
+                    logging.error("Nie udało się utworzyć instancji mpv")
+            except Exception as e:
+                logging.exception("Błąd podczas inicjalizacji mpv: %s", e)
+                cls.player = None
         
         return cls._instance
 
@@ -123,30 +125,30 @@ class LibMPVPlayer:
     def _event_loop(cls):
         if not cls.player:
             return
-            
         cls.running = True
         while cls.running:
             try:
                 event_ptr = libmpv.mpv_wait_event(cls.player, 0.1)
-                if event_ptr:
-                    event = event_ptr.contents
-                    ev_name = libmpv.mpv_event_name(event.event_id).decode()
-                    if event.event_id == 0:
+                if not event_ptr:
+                    continue
+                event = event_ptr.contents
+                ev_name = libmpv.mpv_event_name(event.event_id).decode()
+                if event.event_id == 0:
+                    continue
+                if event.event_id == MPV_EVENT_END_FILE and cls._event_stop_time():
+                    # Koniec odtwarzania pliku
+                    print(f"EVENT: {event.event_id} ({ev_name})")
+                    reason = ctypes.cast(event.data, ctypes.POINTER(ctypes.c_int)).contents.value
+                    if reason == MPV_END_FILE_REASON_EOF:
+                        print("Plik się skończył")
+                    elif reason == MPV_END_FILE_REASON_QUIT or reason == MPV_END_FILE_REASON_STOP:
+                        print("User zmienił utwór")
                         continue
-                    if event.event_id == MPV_EVENT_END_FILE and cls._event_stop_time():
-                        # Koniec odtwarzania pliku
-                        print(f"EVENT: {event.event_id} ({ev_name})")
-                        reason = ctypes.cast(event.data, ctypes.POINTER(ctypes.c_int)).contents.value
-                        if reason == MPV_END_FILE_REASON_EOF:
-                            print("Plik się skończył")
-                        elif reason == MPV_END_FILE_REASON_QUIT or reason == MPV_END_FILE_REASON_STOP:
-                            print("User zmienił utwór")
-                            continue
-                        else:
-                            logging.info("Koniec pliku (brak danych o przyczynie)")
-                            
-                        if cls.on_song_end:
-                            cls.on_song_end()
+                    else:
+                        logging.info("Koniec pliku (brak danych o przyczynie)")
+                        
+                    if cls.on_song_end:
+                        cls.on_song_end()
             except Exception as e:
                 logging.error(f"Błąd w pętli zdarzeń: {e}")
                 break
@@ -167,9 +169,10 @@ class LibMPVPlayer:
         cls._cmd("stop")
 
     @classmethod
-    def set_volume(cls, volume):
-        logging.debug("LIBMPV - SET_VOLUME " + str(volume))
-        cls._cmd("set", "volume", str(volume))
+    def set_volume(cls):
+        """Ustawia głośność zapisaną w Player.volume"""
+        logging.debug("LIBMPV - SET_VOLUME " + str(Player.volume))
+        cls._cmd("set", "volume", str(Player.volume))
 
     @classmethod
     def next(cls, file_path):

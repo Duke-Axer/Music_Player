@@ -4,16 +4,16 @@ import os
 import json
 import random
 
-from scripts.settings import paths
+from scripts.settings import paths, Player
 
 class MusicLibrary():
+    """Zarządza biblioteką muzyczną"""
     tags = [] 
     """Tagi piosenek które będą w biblitece, brak oznacza, że wszystkie będą dodane"""
     full_library: dict[str, list[str]] = {}
     """dict[str, list[str]], zawiera wszystkie dostępne piosenki i ich aktualne dane"""
     library = []
-    """Zawiera ścieżki do piosenek z albumu"""
-    current_index_song = 0
+    """Zawiera listę piosenek z albumu"""
     music_dir = paths.music_location
     music_exts = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
     info_file = "info_music.json"
@@ -22,8 +22,6 @@ class MusicLibrary():
     _instance = None
     is_rnd_flag = False
     """Okresla czy piosenki sa ulozone randomowo"""
-    volume = 50
-    """Ustawiona glosnosc"""
     is_actual_library = True
     """Okresla czy biblioteka jest aktualna"""
 
@@ -91,7 +89,8 @@ class MusicLibrary():
                 cls.library.append(song)
         if MusicLibrary.is_rnd_flag:
             random.shuffle(cls.library)
-        cls.current_index_song = 0
+        Player.index_song = 0
+        Player.index_song = 0
         cls.is_actual_library = False
     @classmethod
     def do_random(cls, yes = True):
@@ -101,36 +100,46 @@ class MusicLibrary():
             
     @classmethod
     def next(cls):
-        cls.current_index_song +=1
-        if cls.current_index_song > len(cls.library) -1:
-            cls.current_index_song = 0
+        """Zwiększa aktualny indeks piosenki o +1, po ostatniej piosence w albumie cofa się do 0.
+        Jeśli piosenki w albumie są ustawione randomowo, to po ostatniej piosence losuje ponownie"""
+        Player.index_song +=1
+        if Player.index_song >= len(cls.library):
+            Player.index_song = 0
             if MusicLibrary.is_rnd_flag:
                 MusicLibrary.do_random(True)
-        path = cls.library[cls.current_index_song]
+        path = cls.library[Player.index_song]
         return os.path.join(cls.music_dir, path)
     
     @classmethod
     def before(cls):
-        cls.current_index_song -=1
-        if cls.current_index_song == -1:
-            cls.current_index_song = len(cls.library) -1
-        path = cls.library[cls.current_index_song]
+        """Ustawia indeks piosneki o 1 mniejszy, bo nie ma zapisanej historii odtwarzania"""
+        Player.index_song -=1
+        if Player.index_song == -1:
+            Player.index_song = len(cls.library) -1
+        path = cls.library[Player.index_song]
         return os.path.join(cls.music_dir, path)
 
     @classmethod
-    def play(cls, index: int = None):
-        """ustawia aktualna piosenke na podany index"""
-        if index is not None:
-            cls.current_index_song = index
-        path = cls.library[cls.current_index_song]
-        return os.path.join(cls.music_dir, path)
+    def play(cls, index: int = Player.index_song):
+        """Zwraca pełną ścieżkę, potrzebną do odtworzenia pliku audio
+        Args:
+            index (int): Numer audio w albumie, domyślnie pobiera z Player.index_song
+        Returns:
+            str: Pełna ścieżka do pliku audio: cls.music_dir + Player.name_song"""
+        Player.name_song = cls.library[index]
+        return os.path.join(cls.music_dir, Player.name_song)
         
     @classmethod
-    def get_index_song(cls, song_name: str):
-        """zwraca numer piosenki w bibliotece"""
+    def get_index_song(cls, song_name: str = Player.name_song):
+        """Zwraca numer piosenki w albumie.  
+        Ta sama piosenka będzie miała różne indeksy, jeśli w albumie piosenki są ustawione losowo.
+        Args:
+            song_name (str): nazwa piosenki, default Player.name_song
+        Returns:
+        int: indeks piosenki o danej nazwie, jeśli nie istnieje to zwraca 0"""
         print(song_name)
 
         if song_name in cls.library:
-            cls.current_index_song = cls.library.index(song_name)
+            return cls.library.index(song_name)
         else:
-            cls.current_index_song = 0
+            return 0

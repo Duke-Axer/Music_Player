@@ -1,8 +1,6 @@
-import ctypes
 import os
 import threading
 import json
-import random
 import logging
 import time
 from flask import Flask, render_template, request, jsonify, Response
@@ -12,8 +10,8 @@ from queue import Queue
 LibMPVPlayer = None
 MusicLibrary = None
 
-from scripts.settings import paths, server
-from scripts.lib_mpv_player import *
+from scripts.settings import paths, server, Player
+from scripts.lib_mpv_player import LibMPVPlayer
 from scripts.music_library import MusicLibrary
 
 
@@ -26,12 +24,12 @@ CORS(app)
 @app.route("/")
 def index():
     initial_state = {
-        "currentSong": "" if MusicLibrary.library == [] else MusicLibrary.library[MusicLibrary.current_index_song],
-        "volume": MusicLibrary.volume,
+        "currentSong": "" if MusicLibrary.library == [] else MusicLibrary.library[Player.index_song],
+        "volume": Player.volume,
         "isRandom": MusicLibrary.is_rnd_flag
     }
     api_url = server.get_address() + "/click"  # np: "http://192.168.0.106:8000"
-    logging.info(f"adres api: " + api_url)
+    logging.info("adres api: " + api_url)
     return render_template(
         "index.html", 
         api_url=server.get_address() + "/click",
@@ -49,6 +47,7 @@ logging.basicConfig(
 
 
 class PlayerCtrl():
+    """Główna klasa do obsługi playera"""
     global LibMPVPlayer, MusicLibrary
     _is_pause = False
     @classmethod
@@ -64,49 +63,54 @@ class PlayerCtrl():
             logging.warning("Player not initialized!")
     @classmethod
     def next(cls):
-        print("następna")
+        """W pełni obsługuje rozpoczęcie odtwarzania następnej piosenki"""
         path = MusicLibrary.next()
         LibMPVPlayer.next(path)
         notify_current_song(path)
         notify_update_library()
     @classmethod
     def before(cls):
+        """W pełni obsługuje rozpoczęcie odtwarzania poprzedniej piosenki"""
         path = MusicLibrary.before()
         LibMPVPlayer.next(path)
         notify_current_song(path)
     @classmethod
     def play(cls):
+        """W pełni obsługuje rozpoczęcie odtwarzania piosenki"""
         path = MusicLibrary.play()
         LibMPVPlayer.next(path)
         if MusicLibrary.library:
             notify_current_song(os.path.join(MusicLibrary.music_dir, 
-            MusicLibrary.library[MusicLibrary.current_index_song]))
+            MusicLibrary.library[Player.index_song]))
             notify_update_library()
 
-# LibMPVPlayer.on_song_end = PlayerCtrl.next # przypisanie callbacka
-
 def notify_current_song(song_path):
-    """wysyla informacje o aktualnej piosence"""
+    """Wysyla informacje o aktualnej piosence.  
+    Args:
+        song_path (str): ścieżka do audio od katalogu z muzyką
+    """
     song_name = os.path.basename(song_path)
     song_update_queue.put({"type": "song", "value": song_name})
 
-def notify_volume(volume):
-    """wysyla informacje o glosnosci"""
-    MusicLibrary.volume = volume
-    song_update_queue.put({"type": "volume", "value": volume})
+def notify_volume():
+    """Wysyla informacje o ustawionej głośności
+    Args:
+        volume (int): Głośnośc do 0 do 100"""
+    song_update_queue.put({"type": "volume", "value": Player.volume})
 
 def notify_rnd_flag(is_rnd):
-    """wysyla informacje, czy playlista jest ustawiona randomowo"""
+    """Wysyla informacje, czy playlista jest ustawiona randomowo
+    Args:
+        is_rnd (bool): true -> jest ustawiona randomowo"""
     song_update_queue.put({"type": "random", "value": is_rnd})
 
 def notify_update_library():
-    """wysyla aktualny album, jeśli jest nieaktualny"""
+    """Wysyla aktualny album, jeśli jest nieaktualny"""
     if MusicLibrary.is_actual_library:
         return
     album_data = MusicLibrary.library
     if album_data == []:
-        album_data = ["aaa", "bbb", "ccc"]
-    print(album_data)
+        album_data = ["aaa", "bbb", "ccc"] # do testów
     song_update_queue.put({
         "type": "library_update",
         "value": album_data
@@ -117,7 +121,7 @@ def notify_update_library():
 
 @app.route('/click', methods=['GET', 'POST'])
 def click():
-    print("=== /click endpoint called ===")
+    """Obsługuje odebranie informacji o kliknięciu w przycisk"""
     
     try:
         data = request.get_json()
@@ -142,10 +146,10 @@ def click():
             PlayerCtrl.before()
             
         elif button_id == "volume":
-            volume = data.get('volume', 50)
-            print(f"Volume change: {volume}%")
-            LibMPVPlayer.set_volume(volume)
-            notify_volume(volume)
+            Player.volume = data.get('volume', Player.volume)
+            print(f"Volume change: {Player.volume}%")
+            LibMPVPlayer.set_volume()
+            notify_volume()
             
         
         elif button_id == "random":
@@ -179,21 +183,23 @@ def stream():
 
 @app.route('/test', methods=['GET'])
 def test_endpoint():
-    return jsonify({"status": "ok", "message": "Server is working!"})
+    return jsonify({"status": "ok", "message": "Serwer zwraca odp"})
 
 @app.route('/album', methods=['GET'])
 def get_album():
     album_data = MusicLibrary.library
     if album_data == []:
-        album_data = ["aaa", "bbb", "ccc"]
+        album_data = ["aaa", "bbb", "ccc"] # do testów
     print(album_data)
     return jsonify(album_data)
 
 @app.route('/wybrana-piosenka', methods=['POST'])
 def wybrana_piosenka():
+    """Wykonuje się, gdy user wybrał z listy piosenkę"""
     data = request.json
-    MusicLibrary.get_index_song(data["title"])
-    print(f"Wybrano piosenkę: {data["title"]} {str(data["index"])} {str(MusicLibrary.current_index_song)}")
+    Player.name_song = data["title"]
+    Player.index_song = MusicLibrary.get_index_song(Player.name_song)
+    print(f"Wybrano piosenkę: {data["title"]} {str(data["index"])} {str(Player.index_song)}")
     PlayerCtrl.play()
     return jsonify({"status": "ok", "received": data})
 
@@ -206,10 +212,10 @@ def test_post():
 def run_flask_server():
     """Uruchamia serwer Flask w osobnym wątku"""
     try:
-        app.run(host="0.0.0.0", port=8000, debug=True, use_reloader=False, threaded=True)
+        app.run(host="0.0.0.0", port=server.port, debug=True, use_reloader=False, threaded=True)
     except Exception as e:
-        logging.warning("Blad uruchomienia serwera")
-        print(f"Flask server error: {e}")
+        logging.warning("Blad uruchomienia serwera Flask")
+        print(f"Blad uruchomienia serwera Flask: {e}")
         import traceback
         traceback.print_exc()
 
