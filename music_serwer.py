@@ -246,6 +246,7 @@ def alarm_web():
 def alarm_add():
     """Odbiera ustawienia alarmu"""
     AlarmManager.update = True
+    print("aaaa")
     data = request.json
     hour_str = data["hour"]
     hour, minute = map(int, data["hour"].split(":"))

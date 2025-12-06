@@ -126,10 +126,11 @@ def alarm_thread():
 	while True:
 		if AlarmManager.update:
 			if not AlarmManager._alarms:
-				time.sleep(60)
+				time.sleep(10)
 				continue
 			print("Alarmy:",AlarmManager._alarms)
 			next_alarm = AlarmManager.next_alarm()
+			print("Następny alarm za: {next_alarm}s")
 		if sleep_seconds > 60:
 			time.sleep(60)
 			alarm_time = AlarmManager.get_next_alarm_time(next_alarm)
