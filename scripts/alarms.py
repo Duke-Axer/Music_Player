@@ -26,6 +26,8 @@ class AlarmManager():
 	sould_be_alarm = False
 	_alarms: list[Alarm]= []
 	next_alarm: Alarm | None = None
+	update = True 
+	"""Informuje czy należy zaktualizaować informacje o alarmach"""
 	
 	@classmethod
 	def add_alarm(cls, name, days, hour, minute):
@@ -76,6 +78,7 @@ class AlarmManager():
 			
 	@staticmethod
 	def get_next_alarm_time(alarm: Alarm):
+		AlarmManager.update = False
 		now = datetime.datetime.now()
 		weekday_now = now.isoweekday()  # 1 = poniedziałek, 7 = niedziela
         
@@ -120,16 +123,20 @@ class AlarmManager():
 
 def alarm_thread():
 	while True:
-		if not AlarmManager._alarms:
+		if AlarmManager.update:
+			if not AlarmManager._alarms:
+				time.sleep(60)
+				continue
+			print("Alarmy:",AlarmManager._alarms)
+			next_alarm = AlarmManager.next_alarm()
+		if sleep_seconds > 60:
 			time.sleep(60)
-			continue
-		next_alarm = AlarmManager.next_alarm()
-		alarm_time = AlarmManager.get_next_alarm_time(next_alarm)
-		sleep_seconds = (alarm_time - datetime.datetime.now()).total_seconds()
-		if sleep_seconds > 0:
+			alarm_time = AlarmManager.get_next_alarm_time(next_alarm)
+			sleep_seconds = (alarm_time - datetime.datetime.now()).total_seconds()
+		else:
 			time.sleep(sleep_seconds)
-		#PlayerCtrl.play()
-		AlarmManager.sould_be_alarm = True
+			AlarmManager.sould_be_alarm = True
+			AlarmManager.update = True
 
 def start_alarm_shread():
 	thread = threading.Thread(target=alarm_thread, daemon=True)

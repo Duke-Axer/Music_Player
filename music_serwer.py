@@ -79,9 +79,9 @@ class PlayerCtrl():
     global LibMPVPlayer, MusicLibrary
     _is_pause = False
     @classmethod
-    def pause(cls):
+    def pause(cls, force_play=False):
         if LibMPVPlayer.player:
-            if cls._is_pause:
+            if cls._is_pause or force_play:
                 LibMPVPlayer.resume()
                 cls._is_pause = False
             else:
@@ -245,6 +245,7 @@ def alarm_web():
 @app.route('/alarm_add', methods=['POST'])
 def alarm_add():
     """Odbiera ustawienia alarmu"""
+    AlarmManager.update = True
     data = request.json
     hour_str = data["hour"]
     hour, minute = map(int, data["hour"].split(":"))
@@ -316,6 +317,6 @@ if __name__ == "__main__":
     while True:
         if AlarmManager.sould_be_alarm:
             print("budzik")
-            PlayerCtrl.play()
+            PlayerCtrl.pause(force_play=True)
             AlarmManager.sould_be_alarm = False
         time.sleep(1)

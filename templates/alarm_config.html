@@ -30,18 +30,18 @@
   <hr>
 
   <h2>Lista alarmów</h2>
-  <ul id="alarmList">
-    {% for alarm in alarms %}
-      <li>
-        {{ alarm.name }} — Dni: {{ alarm.days|join(", ") }} — {{ alarm.hour }}:{{ alarm.minute }}
-        
-        <form method="POST" action="/remove_alarm" style="display:inline;">
-          <input type="hidden" name="name" value="{{ alarm.name }}">
-          <button type="submit">Usuń</button>
-        </form>
-      </li>
-    {% endfor %}
-  </ul>
+<ul id="alarmList">
+  {% for alarm in alarms %}
+    <li>
+      {{ alarm.name }} — Dni: {{ alarm.days|join(", ") }} — {{ alarm.hour }}:{{ alarm.minute }}
+      
+      <form method="POST" action="/remove_alarm" style="display:inline;">
+        <input type="hidden" name="name" value="{{ alarm.name }}">
+        <button type="submit">Usuń</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
 
   <script src="{{ url_for('static', filename='alarm_config.js') }}"></script>
 </body>
