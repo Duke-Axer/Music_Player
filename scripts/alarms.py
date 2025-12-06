@@ -86,7 +86,7 @@ class AlarmManager():
 			days_ahead = (day - weekday_now) % 7
 			potential_days.append(days_ahead)
         
-		min_days_ahead = int('inf')
+		min_days_ahead = float('inf')
 		target_day = -1
         
         # Iteracja przez dni, które zostały skonfigurowane dla alarmu
