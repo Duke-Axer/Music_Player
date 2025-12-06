@@ -134,6 +134,9 @@ def alarm_thread():
 				continue
 			print("Alarmy:",AlarmManager._alarms)
 			next_alarm = AlarmManager.next_alarm()
+			alarm_time = AlarmManager.get_next_alarm_time(next_alarm)
+			sleep_seconds = (alarm_time - datetime.datetime.now()).total_seconds()
+			print(f"Następny alarm {next_alarm.name} za: {sleep_seconds}s")
 		if sleep_seconds > 60:
 			time.sleep(10)
 			alarm_time = AlarmManager.get_next_alarm_time(next_alarm)
