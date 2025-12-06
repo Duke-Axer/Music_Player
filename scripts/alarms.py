@@ -119,6 +119,7 @@ class AlarmManager():
 		return next_alarm_time
 	@classmethod
 	def next_alarm(cls):
+		AlarmManager.update = False
 		if not cls._alarms:
 			return None
 		return min(cls._alarms, key=cls.get_next_alarm_time)
@@ -137,7 +138,7 @@ def alarm_thread():
 			time.sleep(10)
 			alarm_time = AlarmManager.get_next_alarm_time(next_alarm)
 			sleep_seconds = (alarm_time - datetime.datetime.now()).total_seconds()
-			AlarmManager.update = False
+			
 
 			print(f"Następny alarm {next_alarm.name} za: {sleep_seconds}s")
 		else:
