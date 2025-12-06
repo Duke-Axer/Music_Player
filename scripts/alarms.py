@@ -104,7 +104,7 @@ class AlarmManager():
 				alarm_datetime = datetime.datetime(now.year, now.month, now.day, alarm.hour, alarm.minute)
 				alarm_datetime += datetime.timedelta(days=days_to_add)
             
-            # Wyszukujemy najmniejszą różnicę
+            # Najmniejsza różnica
 			if days_to_add < min_days_ahead:
 				min_days_ahead = days_to_add
 				target_day = day
