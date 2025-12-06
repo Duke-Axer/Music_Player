@@ -6,36 +6,23 @@
 </head>
 <body>
   <h2>Ustaw budzik</h2>
-  <form method="POST" action="/alarm_add">
+  <form id="alarmForm"> 
     <label for="name">Nazwa alarmu:</label>
     <input type="text" id="name" name="name" required><br><br>
-
-    <label for="hour">Godzina:</label>
-    <input type="time" id="hour" name="hour" required><br><br>
-
-    <label>Dni tygodnia:</label><br>
-    <input type="checkbox" name="days" value="1"> Poniedziałek<br>
-    <input type="checkbox" name="days" value="2"> Wtorek<br>
-    <input type="checkbox" name="days" value="3"> Środa<br>
-    <input type="checkbox" name="days" value="4"> Czwartek<br>
-    <input type="checkbox" name="days" value="5"> Piątek<br>
-    <input type="checkbox" name="days" value="6"> Sobota<br>
     <input type="checkbox" name="days" value="7"> Niedziela<br><br>
 
-    <button type="submit">Zapisz</button>
+    <button type="submit">Zapisz Alarm</button>
   </form>
 
   <h2>Lista alarmów</h2>
-  <ul>
+  <ul id="alarmList">
     {% for alarm in alarms %}
       <li>
-        {{ alarm.name }} — dzień {{ alarm.day }} — {{ alarm.hour }}:{{ alarm.minute }}
-        <form method="POST" action="/remove_alarm" style="display:inline;">
-          <input type="hidden" name="name" value="{{ alarm.name }}">
-          <button type="submit">Usuń</button>
-        </form>
-      </li>
+        {{ alarm.name }} — Dni: {{ alarm.days|join(", ") }} — {{ alarm.hour }}:{{ alarm.minute }}
+        </li>
     {% endfor %}
   </ul>
+
+  <script src="{{ url_for('static', filename='alarm_config.js') }}"></script>
 </body>
 </html>
