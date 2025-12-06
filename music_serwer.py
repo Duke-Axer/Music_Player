@@ -315,5 +315,7 @@ if __name__ == "__main__":
     
     while True:
         if AlarmManager.sould_be_alarm:
+            print("budzik")
             PlayerCtrl.play()
+            AlarmManager.sould_be_alarm = False
         time.sleep(1)
