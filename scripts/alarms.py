@@ -35,11 +35,15 @@ class AlarmManager():
 			return
 		alarm_obj = Alarm(name, days, hour, minute)
 		cls._alarms.append(alarm_obj)
+		cls.update = True
+		print("Dodanie alarmu")
 	
 	@classmethod
 	def remove_alarm(cls, name):
 		"""Usuwa alarm o danej nazwie z listy"""
 		cls._alarms = [alarm for alarm in cls._alarms if alarm.name != name]
+		cls.update = True
+		print("Usunięcie alarmu")
 	
 	@classmethod
 	def _correct_args(cls, name, days, hour, minute):
@@ -78,7 +82,6 @@ class AlarmManager():
 			
 	@staticmethod
 	def get_next_alarm_time(alarm: Alarm):
-		AlarmManager.update = False
 		now = datetime.datetime.now()
 		weekday_now = now.isoweekday()  # 1 = poniedziałek, 7 = niedziela
         
@@ -134,7 +137,9 @@ def alarm_thread():
 			time.sleep(10)
 			alarm_time = AlarmManager.get_next_alarm_time(next_alarm)
 			sleep_seconds = (alarm_time - datetime.datetime.now()).total_seconds()
-			print(f"Następny alarm za: {sleep_seconds}s")
+			AlarmManager.update = False
+
+			print(f"Następny alarm {next_alarm.name} za: {sleep_seconds}s")
 		else:
 			print("odliczanie")
 			time.sleep(sleep_seconds)
