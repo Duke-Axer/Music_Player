@@ -11,7 +11,7 @@ from scripts.alarms import AlarmManager, start_alarm_shread
 LibMPVPlayer = None
 MusicLibrary = None
 
-from scripts.settings import paths, server, Player, AlarmManager
+from scripts.settings import paths, server, Player
 from scripts.lib_mpv_player import LibMPVPlayer
 from scripts.music_library import MusicLibrary
 
@@ -280,4 +280,6 @@ if __name__ == "__main__":
     start_alarm_shread()
     
     while True:
+        if AlarmManager.sould_be_alarm:
+            PlayerCtrl.play()
         time.sleep(1)

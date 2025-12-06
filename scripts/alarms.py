@@ -24,6 +24,7 @@ class Alarm():
 		return cls(data["name"], data["days"], data["hour"], data["minute"])
 
 class AlarmManager():
+	sould_be_alarm = False
 	_alarms: list[Alarm]= []
 	next_alarm: Alarm | None = None
 	
@@ -128,7 +129,8 @@ def alarm_thread():
 		sleep_seconds = (alarm_time - datetime.datetime.now()).total_seconds()
 		if sleep_seconds > 0:
 			time.sleep(sleep_seconds)
-		PlayerCtrl.play()
+		#PlayerCtrl.play()
+		AlarmManager.sould_be_alarm = True
 
 def start_alarm_shread():
 	thread = threading.Thread(target=alarm_thread, daemon=True)
