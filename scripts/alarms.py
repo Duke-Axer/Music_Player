@@ -3,7 +3,7 @@ import time
 import datetime
 import json
 
-from settings import paths
+from scripts.settings import paths
 from music_serwer import PlayerCtrl
 
 class Alarm():
