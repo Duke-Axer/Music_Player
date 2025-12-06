@@ -122,6 +122,7 @@ class AlarmManager():
 
 
 def alarm_thread():
+	sleep_seconds = float("inf")
 	while True:
 		if AlarmManager.update:
 			if not AlarmManager._alarms:
