@@ -37,6 +37,16 @@ def index():
         initial_state=json.dumps(initial_state)  # Dane jako JSON string
     )
 
+@app.route('/alarm_config')
+def alarm_config_web():
+    """Wyświetla stronę do konfiguracji alarmów i listę aktywnych alarmów."""
+    # Załaduj aktualne alarmy, aby wyświetlić je w szablonie
+    alarms_list = AlarmManager.return_alarms_as_dict()
+    
+    return render_template(
+        "alarm_config.html", 
+        alarms=alarms_list
+    )
 
 # Konfiguracja loggera
 logging.basicConfig(
@@ -219,10 +229,17 @@ def alarm_web():
 def alarm_add():
     """Odbiera ustawienia alarmu"""
     data = request.json
-    hour_str = "07:30"
+    hour_str = data["hour"]
     hour, minute = map(int, data["hour"].split(":"))
-
-    AlarmManager.add_alarm(data["name"], data["day"], hour, minute)
+    try:
+        days_list_str = data.get("days", [])
+        days_list_int = [int(day) for day in days_list_str]
+    except (TypeError, ValueError) as e:
+        logging.error(f"Błąd parsowania dni: {e}")
+        return jsonify({"error": "Nieprawidłowy format dni tygodnia"}), 400
+    AlarmManager.add_alarm(data["name"], days_list_int, hour, minute)
+    # Zapisanie zmian do pliku
+    AlarmManager.save_to_file()
     return jsonify({"status": "ok", "received": data})
 
 def run_flask_server():
