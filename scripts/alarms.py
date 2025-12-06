@@ -4,7 +4,6 @@ import datetime
 import json
 
 from scripts.settings import paths
-from music_serwer import PlayerCtrl
 
 class Alarm():
 	def __init__(self, name: str, days: list[int], hour: int, minute: int):
