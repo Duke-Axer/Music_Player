@@ -22,6 +22,8 @@ class paths():
 	
 	music_location = "/data/data/com.termux/files/home/storage/music"
 
+	alarms_path = "alarms.json"
+
 class server():
 	port = 8000
 	_address = None # "192.168.0.106"
@@ -42,3 +44,4 @@ class server():
 			finally:
 				s.close()
 		return cls._address
+

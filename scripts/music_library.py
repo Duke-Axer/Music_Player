@@ -20,7 +20,7 @@ class MusicLibrary():
     _json_file_is_actual = True
     """okresla czy plik json jest aktualny wzgledem listy z muzyka"""
     _instance = None
-    is_rnd_flag = False
+    is_rnd_flag = True
     """Okresla czy piosenki sa ulozone randomowo"""
     is_actual_library = True
     """Okresla czy biblioteka jest aktualna"""

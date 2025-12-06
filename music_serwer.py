@@ -6,11 +6,12 @@ import time
 from flask import Flask, render_template, request, jsonify, Response
 from flask_cors import CORS
 from queue import Queue
+from scripts.alarms import AlarmManager, start_alarm_shread
 
 LibMPVPlayer = None
 MusicLibrary = None
 
-from scripts.settings import paths, server, Player
+from scripts.settings import paths, server, Player, AlarmManager
 from scripts.lib_mpv_player import LibMPVPlayer
 from scripts.music_library import MusicLibrary
 
@@ -209,6 +210,21 @@ def test_post():
     data = request.json
     return jsonify({"status": "received", "data": data})
 
+@app.route('/alarm', methods=['GET'])
+def alarm_web():
+    alarm = AlarmManager.return_alarms_as_dict()
+    return jsonify(alarm)
+
+@app.route('/alarm_add', methods=['POST'])
+def alarm_add():
+    """Odbiera ustawienia alarmu"""
+    data = request.json
+    hour_str = "07:30"
+    hour, minute = map(int, data["hour"].split(":"))
+
+    AlarmManager.add_alarm(data["name"], data["day"], hour, minute)
+    return jsonify({"status": "ok", "received": data})
+
 def run_flask_server():
     """Uruchamia serwer Flask w osobnym wątku"""
     try:
@@ -258,6 +274,10 @@ if __name__ == "__main__":
     
     time.sleep(3)
     print(f"Serwer dziala: {server.get_address()}")
+
+    #uruchamianie wątku alarmu
+    AlarmManager.load_from_file()
+    start_alarm_shread()
     
     while True:
         time.sleep(1)
