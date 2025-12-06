@@ -4,6 +4,7 @@ import json
 import logging
 import time
 from flask import Flask, render_template, request, jsonify, Response
+from flask import redirect, url_for
 from flask_cors import CORS
 from queue import Queue
 from scripts.alarms import AlarmManager, start_alarm_shread
@@ -47,6 +48,22 @@ def alarm_config_web():
         "alarm_config.html", 
         alarms=alarms_list
     )
+
+
+
+@app.route('/remove_alarm', methods=['POST'])
+def remove_alarm_web():
+    """Usuwa alarm na podstawie nazwy przesłanej w formularzu."""
+    # Dane ze standardowego formularza są w request.form
+    alarm_name = request.form.get("name")
+    
+    if alarm_name:
+        logging.info(f"Usuwanie alarmu: {alarm_name}")
+        AlarmManager.remove_alarm(alarm_name)
+        AlarmManager.save_to_file()
+        
+    # Przekierowujemy z powrotem na stronę konfiguracji alarmów
+    return redirect(url_for('alarm_config_web'))
 
 # Konfiguracja loggera
 logging.basicConfig(
